@@ -6,6 +6,9 @@ struct RepoListView: View {
     @State private var searchText = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var cloneTarget: Repository?
+    @State private var cloneProgress: String?
+    @State private var isCloning = false
 
     var clonedRepos: [Repository] {
         repos.filter { $0.isClonedLocally }
@@ -30,8 +33,11 @@ struct RepoListView: View {
             if !filteredCloned.isEmpty {
                 Section("Cloned") {
                     ForEach(filteredCloned) { repo in
-                        RepoRowView(repo: repo, isCloned: true)
+                        NavigationLink(value: repo) {
+                            RepoRowView(repo: repo, isCloned: true)
+                        }
                     }
+                    .onDelete(perform: deleteClonedRepos)
                 }
             }
 
@@ -44,7 +50,11 @@ struct RepoListView: View {
                     }
                 } else {
                     ForEach(filteredRemote) { repo in
-                        RepoRowView(repo: repo, isCloned: false)
+                        Button {
+                            cloneTarget = repo
+                        } label: {
+                            RepoRowView(repo: repo, isCloned: false)
+                        }
                     }
                 }
             }
@@ -58,6 +68,9 @@ struct RepoListView: View {
             }
         }
         .navigationTitle("Repos")
+        .navigationDestination(for: Repository.self) { repo in
+            FileTreeView(repo: repo)
+        }
         .searchable(text: $searchText, prompt: "Search repos...")
         .refreshable {
             await loadRepos()
@@ -76,6 +89,34 @@ struct RepoListView: View {
                 await loadRepos()
             }
         }
+        .alert("Clone Repository?", isPresented: .init(
+            get: { cloneTarget != nil && !isCloning },
+            set: { if !$0 { cloneTarget = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { cloneTarget = nil }
+            Button("Clone") {
+                if let repo = cloneTarget {
+                    Task { await cloneRepo(repo) }
+                }
+            }
+        } message: {
+            if let repo = cloneTarget {
+                Text("Clone \(repo.fullName) to local storage?")
+            }
+        }
+        .overlay {
+            if isCloning {
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                    Text(cloneProgress ?? "Cloning...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 200, height: 120)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+            }
+        }
     }
 
     private func loadRepos() async {
@@ -90,5 +131,33 @@ struct RepoListView: View {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func cloneRepo(_ repo: Repository) async {
+        guard let token = appState.authService.getAccessToken() else { return }
+        isCloning = true
+        cloneProgress = "Starting..."
+
+        do {
+            try await GitService.shared.cloneViaAPI(repo, token: token) { status in
+                Task { @MainActor in
+                    cloneProgress = status
+                }
+            }
+            await loadRepos()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isCloning = false
+        cloneTarget = nil
+    }
+
+    private func deleteClonedRepos(at offsets: IndexSet) {
+        for index in offsets {
+            let repo = filteredCloned[index]
+            try? GitService.shared.deleteLocalRepo(at: repo.localPath)
+        }
+        Task { await loadRepos() }
     }
 }

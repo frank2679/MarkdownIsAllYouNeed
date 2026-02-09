@@ -24,6 +24,15 @@
 		AA000015 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000015; };
 		AA000016 /* RepoRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000016; };
 		AA000017 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000017; };
+		AA000018 /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000018; };
+		AA000019 /* FileTypeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000019; };
+		AA000020 /* GitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000020; };
+		AA000021 /* FileManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000021; };
+		AA000022 /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000022; };
+		AA000023 /* FileNodeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000023; };
+		AA000024 /* TextFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000024; };
+		AA000025 /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000025; };
+		AA000026 /* BinaryFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000026; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +53,15 @@
 		BB000015 /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
 		BB000016 /* RepoRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoRowView.swift; sourceTree = "<group>"; };
 		BB000017 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		BB000018 /* FileNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileNode.swift; sourceTree = "<group>"; };
+		BB000019 /* FileTypeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTypeDetector.swift; sourceTree = "<group>"; };
+		BB000020 /* GitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitService.swift; sourceTree = "<group>"; };
+		BB000021 /* FileManagerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerService.swift; sourceTree = "<group>"; };
+		BB000022 /* FileTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTreeView.swift; sourceTree = "<group>"; };
+		BB000023 /* FileNodeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileNodeRow.swift; sourceTree = "<group>"; };
+		BB000024 /* TextFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFileView.swift; sourceTree = "<group>"; };
+		BB000025 /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
+		BB000026 /* BinaryFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileView.swift; sourceTree = "<group>"; };
 		CC000001 /* MarkdownEditor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarkdownEditor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -94,10 +112,23 @@
 			children = (
 				EE000010 /* Auth */,
 				EE000011 /* Repos */,
+				EE000014 /* Files */,
 				EE000012 /* Chat */,
 				EE000013 /* Settings */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		EE000014 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				BB000022 /* FileTreeView.swift */,
+				BB000023 /* FileNodeRow.swift */,
+				BB000024 /* TextFileView.swift */,
+				BB000025 /* ImagePreviewView.swift */,
+				BB000026 /* BinaryFileView.swift */,
+			);
+			path = Files;
 			sourceTree = "<group>";
 		};
 		EE000005 /* Services */ = {
@@ -106,6 +137,8 @@
 				BB000007 /* AuthService.swift */,
 				BB000013 /* RemoteProvider.swift */,
 				BB000008 /* GitHubProvider.swift */,
+				BB000020 /* GitService.swift */,
+				BB000021 /* FileManagerService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -115,6 +148,7 @@
 			children = (
 				BB000011 /* UserProfile.swift */,
 				BB000012 /* Repository.swift */,
+				BB000018 /* FileNode.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -124,6 +158,7 @@
 			children = (
 				BB000009 /* KeychainHelper.swift */,
 				BB000010 /* Constants.swift */,
+				BB000019 /* FileTypeDetector.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -263,6 +298,15 @@
 				AA000015 /* ChatListView.swift in Sources */,
 				AA000016 /* RepoRowView.swift in Sources */,
 				AA000017 /* ProfileView.swift in Sources */,
+				AA000018 /* FileNode.swift in Sources */,
+				AA000019 /* FileTypeDetector.swift in Sources */,
+				AA000020 /* GitService.swift in Sources */,
+				AA000021 /* FileManagerService.swift in Sources */,
+				AA000022 /* FileTreeView.swift in Sources */,
+				AA000023 /* FileNodeRow.swift in Sources */,
+				AA000024 /* TextFileView.swift in Sources */,
+				AA000025 /* ImagePreviewView.swift in Sources */,
+				AA000026 /* BinaryFileView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

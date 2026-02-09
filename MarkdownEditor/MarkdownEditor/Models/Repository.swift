@@ -1,6 +1,8 @@
 import Foundation
 
-struct Repository: Codable, Identifiable {
+struct Repository: Codable, Identifiable, Hashable {
+    static func == (lhs: Repository, rhs: Repository) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: Int
     let name: String
     let fullName: String
