@@ -66,7 +66,25 @@ protocol LLMProvider {
 
 内置实现：`OpenAIProvider`、`AnthropicProvider`、`CustomOpenAICompatibleProvider`
 
-### 1.5 GitHub 认证：OAuth + GitHub App
+### 1.5 远端平台抽象：RemoteProvider
+
+**结论**：虽然 MVP 只支持 GitHub，但将远端平台操作抽象为 `RemoteProvider` 协议，不绑死 GitHub。
+
+**原因**：
+- GitService（本地 Git）和远端平台（GitHub/GitLab/Gitea）是两个独立关注点
+- MVP 只实现 `GitHubProvider`，但 UI 和业务逻辑通过 Protocol 解耦
+- 未来新增 GitLab/Gitea 只需实现新的 Provider，不改现有代码
+
+```swift
+protocol RemoteProvider {
+    func authenticate() async throws
+    func fetchRepos(page: Int) async throws -> [Repository]
+    func fetchUserProfile() async throws -> UserProfile
+    var name: String { get }  // "GitHub", "GitLab", etc.
+}
+```
+
+### 1.6 GitHub 认证：OAuth + GitHub App
 
 **结论**：使用 GitHub OAuth App 通过 ASWebAuthenticationSession 在应用内完成授权。
 
@@ -74,6 +92,25 @@ protocol LLMProvider {
 ```
 App → ASWebAuthenticationSession → GitHub 授权页 → 回调 URL → 获取 access_token → 存入 Keychain
 ```
+
+### 1.7 Native ↔ JS Bridge 协议规范
+
+**结论**：所有 Native 与 WebView 的通信走统一的 **版本化 JSON 协议**，不使用零散的 evaluateJavaScript 调用。
+
+**原因**：Bridge 是编辑器最难改的接口，两端代码都依赖它。统一协议确保编辑器升级/替换时兼容性可控。
+
+```javascript
+// 统一消息格式（双向通信）
+{
+  "action": "setContent",    // 操作类型
+  "version": 1,              // 协议版本
+  "payload": {               // 数据
+    "markdown": "# Hello"
+  }
+}
+```
+
+已定义的 action 列表见 3.4 节。
 
 ---
 
@@ -152,7 +189,7 @@ App → ASWebAuthenticationSession → GitHub 授权页 → 回调 URL → 获�
 MarkdownIsAllYouNeed/
 ├── App/
 │   ├── MarkdownIsAllYouNeedApp.swift     # App 入口
-│   └── AppState.swift                     # 全局状态
+│   └── AppState.swift                     # 全局状态（含 lastEditedFile、启动行为）
 │
 ├── Views/
 │   ├── Auth/
@@ -187,7 +224,8 @@ MarkdownIsAllYouNeed/
 │
 ├── Services/
 │   ├── AuthService.swift                  # OAuth + Token 管理
-│   ├── GitHubAPIService.swift             # GitHub REST API
+│   ├── RemoteProvider.swift               # 远端平台抽象协议
+│   ├── GitHubProvider.swift               # GitHub 实现（OAuth + REST API）
 │   ├── GitService.swift                   # 本地 Git (SwiftGit2)
 │   ├── FileManagerService.swift           # 文件操作
 │   ├── SyncEngine.swift                   # 同步引擎
@@ -264,28 +302,43 @@ protocol GitServiceProtocol {
 
 **架构**：Native SwiftUI 容器 + WKWebView + Milkdown
 
-**Native → JS 通信**（通过 evaluateJavaScript）：
+**Native ↔ JS Bridge 协议**（版本化 JSON，见 1.7 节）：
+
+Native → JS（通过 evaluateJavaScript 发送统一消息）：
 ```javascript
-// 加载内容
-window.editor.setContent(markdownString)
-
-// 获取内容
-window.editor.getContent() // → returns markdown string
-
-// 插入图片
-window.editor.insertImage(relativePath, altText)
+// 所有调用走统一入口
+window.bridge.receive({
+  action: "setContent", version: 1,
+  payload: { markdown: "# Hello" }
+})
+window.bridge.receive({
+  action: "insertImage", version: 1,
+  payload: { path: "assets/photo.png", alt: "photo" }
+})
+window.bridge.receive({
+  action: "getContent", version: 1, payload: {}
+})
+window.bridge.receive({
+  action: "formatText", version: 1,
+  payload: { format: "bold" }  // bold, italic, heading1, code, etc.
+})
 ```
 
-**JS → Native 通信**（通过 WKScriptMessageHandler）：
+JS → Native（通过 WKScriptMessageHandler）：
 ```javascript
-// 内容变更通知
-webkit.messageHandlers.contentChanged.postMessage({
-    markdown: "...",
-    isDirty: true
+// 所有回调走统一出口
+webkit.messageHandlers.bridge.postMessage({
+  action: "contentChanged", version: 1,
+  payload: { markdown: "...", isDirty: true }
 })
-
-// 请求插入图片（触发 Native 图片选择器）
-webkit.messageHandlers.requestImagePicker.postMessage({})
+webkit.messageHandlers.bridge.postMessage({
+  action: "contentReady", version: 1,
+  payload: { markdown: "..." }  // getContent 的返回值
+})
+webkit.messageHandlers.bridge.postMessage({
+  action: "requestImagePicker", version: 1,
+  payload: {}
+})
 ```
 
 **编辑器工具栏**：使用 Native SwiftUI 工具栏，点击后调用 JS 方法：
@@ -381,44 +434,64 @@ System: 用户正在编辑文件 `hello.md`，内容如下：
 
 ## 5. 开发计划（分阶段）
 
-### Phase 1：项目骨架 + 认证（~2天）
-- [x] Xcode 项目初始化，SwiftUI 基本结构
-- [x] GitHub OAuth 登录流程
-- [x] Token 存储 (Keychain)
-- [x] 用户信息展示
+目标：先让链路跑通（MVP-0），再补齐体验（MVP-1）。
 
-### Phase 2：仓库管理（~2天）
-- [x] GitHub API 获取仓库列表
-- [x] 仓库 Clone 到本地
-- [x] 文件树浏览
-- [x] 文件类型识别与分流
+### MVP-0：能跑（链路跑通，自己能用它编辑 GitHub 仓库的 README）
 
-### Phase 3：Markdown 编辑器（~3天）
-- [x] Milkdown 编辑器 Web 资源打包
-- [x] WKWebView 容器
-- [x] Native ↔ JS Bridge
-- [x] 编辑器工具栏
-- [x] 图片插入（相册/拍照 → 存入仓库）
+#### Phase 1：项目骨架 + 认证
+- [ ] Xcode 项目初始化，SwiftUI + Tab 基本结构
+- [ ] AppState（含 lastEditedFile 字段、启动行为配置）
+- [ ] GitHub OAuth 登录流程
+- [ ] Token 存储 (Keychain)
+- [ ] 用户信息展示
 
-### Phase 4：Git 工作流（~2天）
-- [x] Git status / diff 展示
-- [x] Commit（选文件 + 写 message）
-- [x] Push
-- [x] Pull + 冲突检测
-- [x] 冲突处理 UI
+#### Phase 2：仓库管理 + 文件浏览
+- [ ] RemoteProvider 协议 + GitHubProvider 实现
+- [ ] 仓库列表（已克隆 + 远端，搜索过滤）
+- [ ] Clone 到本地（支持 shallow clone）
+- [ ] 文件树浏览 + 最近编辑文件列表
+- [ ] 文件类型识别与分流
 
-### Phase 5：AI Chat（~2天）
+#### Phase 3：Markdown 编辑器（基础元素）
+- [ ] Milkdown 编辑器 Web 资源打包
+- [ ] WKWebView 容器 + 版本化 Bridge 协议
+- [ ] 基础元素：标题、粗体/斜体、列表、代码块、链接、引用
+- [ ] Native 工具栏 + 键盘适配
+- [ ] 文件保存到本地
+
+#### Phase 4：基本 Git 工作流
+- [ ] Git status 展示
+- [ ] Commit（选文件 + 写 message）
+- [ ] Push
+- [ ] Pull（检测远端变更）
+
+### MVP-1：能用（补齐体验）
+
+#### Phase 5：编辑器增强
+- [ ] 表格、任务列表 (checkbox)
+- [ ] 图片插入（相册/拍照 → `assets/{timestamp}-{name}`）
+- [ ] LaTeX 数学公式、Mermaid 图表
+- [ ] 脚注、删除线
+
+#### Phase 6：Git 增强 + 离线
+- [ ] Diff 查看
+- [ ] 冲突检测与处理 UI
+- [ ] 离线编辑验证
+- [ ] 同步状态指示
+
+#### Phase 7：AI Chat
 - [ ] LLMService 统一接口 + OpenAI / Anthropic adapter
 - [ ] Chat UI（对话列表 + 对话详情 + 流式输出）
 - [ ] 上下文注入（从编辑器携带文件内容）
 - [ ] 设置页：API Key 配置 + 模型选择
 - [ ] 对话历史持久化 (SwiftData)
 
-### Phase 6：离线 + 打磨（~1天）
-- [ ] 离线编辑验证
-- [ ] 同步状态指示
+#### Phase 8：打磨
+- [ ] 快速入口（启动直接进入上次文件）
 - [ ] 错误处理 & 用户提示
-- [ ] 基本设置页完善
+- [ ] 文件操作（新建/删除/重命名）
+- [ ] 非 MD 文件浏览（图片预览、纯文本编辑）
+- [ ] 设置页完善（存储管理、编辑器偏好）
 
 ---
 
