@@ -53,10 +53,9 @@ struct FileTreeView: View {
         .navigationDestination(item: $selectedFile) { selection in
             switch selection.fileType {
             case .markdown:
-                TextFileView(
+                MarkdownEditorScreen(
                     fileURL: repo.localPath.appendingPathComponent(selection.path),
-                    fileName: (selection.path as NSString).lastPathComponent,
-                    isMarkdown: true
+                    fileName: (selection.path as NSString).lastPathComponent
                 )
             case .text:
                 TextFileView(

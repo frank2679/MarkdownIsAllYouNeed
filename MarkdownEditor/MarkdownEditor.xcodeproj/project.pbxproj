@@ -33,6 +33,12 @@
 		AA000024 /* TextFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000024; };
 		AA000025 /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000025; };
 		AA000026 /* BinaryFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000026; };
+		AA000027 /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000027; };
+		AA000028 /* EditorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000028; };
+		AA000029 /* MarkdownEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000029; };
+		AA000030 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000030; };
+		AA000031 /* editor.js in Resources */ = {isa = PBXBuildFile; fileRef = BB000031; };
+		AA000032 /* editor.css in Resources */ = {isa = PBXBuildFile; fileRef = BB000032; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +68,12 @@
 		BB000024 /* TextFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFileView.swift; sourceTree = "<group>"; };
 		BB000025 /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		BB000026 /* BinaryFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileView.swift; sourceTree = "<group>"; };
+		BB000027 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
+		BB000028 /* EditorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorToolbar.swift; sourceTree = "<group>"; };
+		BB000029 /* MarkdownEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorScreen.swift; sourceTree = "<group>"; };
+		BB000030 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		BB000031 /* editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = editor.js; sourceTree = "<group>"; };
+		BB000032 /* editor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = editor.css; sourceTree = "<group>"; };
 		CC000001 /* MarkdownEditor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarkdownEditor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -113,10 +125,32 @@
 				EE000010 /* Auth */,
 				EE000011 /* Repos */,
 				EE000014 /* Files */,
+				EE000015 /* Editor */,
 				EE000012 /* Chat */,
 				EE000013 /* Settings */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		EE000015 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				BB000027 /* MarkdownEditorView.swift */,
+				BB000028 /* EditorToolbar.swift */,
+				BB000029 /* MarkdownEditorScreen.swift */,
+				EE000016 /* WebView */,
+			);
+			path = Editor;
+			sourceTree = "<group>";
+		};
+		EE000016 /* WebView */ = {
+			isa = PBXGroup;
+			children = (
+				BB000030 /* index.html */,
+				BB000031 /* editor.js */,
+				BB000032 /* editor.css */,
+			);
+			path = WebView;
 			sourceTree = "<group>";
 		};
 		EE000014 /* Files */ = {
@@ -272,6 +306,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000014 /* Assets.xcassets in Resources */,
+				AA000030 /* index.html in Resources */,
+				AA000031 /* editor.js in Resources */,
+				AA000032 /* editor.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +344,9 @@
 				AA000024 /* TextFileView.swift in Sources */,
 				AA000025 /* ImagePreviewView.swift in Sources */,
 				AA000026 /* BinaryFileView.swift in Sources */,
+				AA000027 /* MarkdownEditorView.swift in Sources */,
+				AA000028 /* EditorToolbar.swift in Sources */,
+				AA000029 /* MarkdownEditorScreen.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
