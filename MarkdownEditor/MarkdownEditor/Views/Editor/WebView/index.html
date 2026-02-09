@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+    <div id="editor"></div>
+
+    <!-- Milkdown CDN (will be replaced by bundled version in production) -->
+    <script src="https://cdn.jsdelivr.net/npm/@milkdown/ctx@7.6.0/lib/index.es.js" type="module"></script>
+
+    <!-- For MVP-0, we use a lightweight custom WYSIWYG approach -->
+    <!-- Full Milkdown integration requires npm build pipeline -->
+    <!-- This implementation provides core WYSIWYG editing with markdown I/O -->
+    <script src="editor.js"></script>
+</body>
+</html>
