@@ -1,0 +1,28 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+
+# Secrets - never commit
+*.env
+credentials.json
