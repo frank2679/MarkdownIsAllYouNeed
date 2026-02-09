@@ -46,7 +46,27 @@ Milkdown 优势：
 - 不依赖命令行 `git`，适合 App 沙盒环境
 - GitHub API 仅用于 OAuth 和辅助操作（如仓库列表），核心 Git 操作走本地
 
-### 1.4 GitHub 认证：OAuth + GitHub App
+### 1.4 AI Chat 引擎：多 LLM 统一接口
+
+**结论**：自建轻量 `LLMService` 抽象层，统一 OpenAI / Anthropic / 自定义 API 的调用。
+
+**原因**：
+- 用户自行配置 API Key，需要支持多家供应商
+- OpenAI 和 Anthropic 的 API 格式不同（OpenAI 用 `/chat/completions`，Anthropic 用 `/messages`）
+- 通过 Protocol 抽象统一接口，新增供应商只需实现一个 adapter
+- 支持 Streaming（SSE）实现打字机效果
+
+```swift
+protocol LLMProvider {
+    var name: String { get }
+    func sendMessage(messages: [ChatMessage], stream: Bool) -> AsyncThrowingStream<String, Error>
+    func validateAPIKey() async throws -> Bool
+}
+```
+
+内置实现：`OpenAIProvider`、`AnthropicProvider`、`CustomOpenAICompatibleProvider`
+
+### 1.5 GitHub 认证：OAuth + GitHub App
 
 **结论**：使用 GitHub OAuth App 通过 ASWebAuthenticationSession 在应用内完成授权。
 
@@ -106,12 +126,18 @@ App → ASWebAuthenticationSession → GitHub 授权页 → 回调 URL → 获�
 │  │ • token mgmt │  │ • 冲突检测                        │  │
 │  │ • keychain   │  │ • 同步状态管理                     │  │
 │  └──────────────┘  └──────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐│
+│  │ LLMService                                          ││
+│  │ • OpenAIProvider / AnthropicProvider / CustomProvider││
+│  │ • streaming chat · context injection · history mgmt ││
+│  └──────────────────────────────────────────────────────┘│
 ├──────────────────────────────────────────────────────────┤
 │                    Data Layer                              │
 │  ┌──────────────────────────────────────────────────────┐│
 │  │  Local Git Repos (App Sandbox/Documents)             ││
-│  │  Keychain (OAuth Token)                              ││
+│  │  Keychain (OAuth Token, AI API Keys)                 ││
 │  │  UserDefaults (Settings, Repo metadata)              ││
+│  │  SwiftData / JSON (Chat history)                     ││
 │  └──────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────┘
 ```
@@ -150,21 +176,35 @@ MarkdownIsAllYouNeed/
 │   │   ├── ChangesListView.swift          # 变更文件列表
 │   │   ├── CommitView.swift               # 提交界面
 │   │   └── ConflictView.swift             # 冲突处理界面
+│   ├── Chat/
+│   │   ├── ChatListView.swift             # 对话列表
+│   │   ├── ChatView.swift                 # 对话详情
+│   │   ├── ChatBubbleView.swift           # 消息气泡（支持 MD 渲染）
+│   │   └── ChatInputView.swift            # 输入框
 │   └── Settings/
-│       └── SettingsView.swift             # 设置页
+│       ├── SettingsView.swift             # 设置页
+│       └── APIKeyConfigView.swift         # API Key 配置
 │
 ├── Services/
 │   ├── AuthService.swift                  # OAuth + Token 管理
 │   ├── GitHubAPIService.swift             # GitHub REST API
 │   ├── GitService.swift                   # 本地 Git (SwiftGit2)
 │   ├── FileManagerService.swift           # 文件操作
-│   └── SyncEngine.swift                   # 同步引擎
+│   ├── SyncEngine.swift                   # 同步引擎
+│   └── LLM/
+│       ├── LLMService.swift               # 统一 Chat 接口
+│       ├── OpenAIProvider.swift            # OpenAI adapter
+│       ├── AnthropicProvider.swift         # Anthropic adapter
+│       └── CustomProvider.swift            # 自定义 OpenAI 兼容 API
 │
 ├── Models/
 │   ├── Repository.swift                   # 仓库模型
 │   ├── FileNode.swift                     # 文件树节点
 │   ├── GitStatus.swift                    # Git 状态
-│   └── UserProfile.swift                  # 用户信息
+│   ├── UserProfile.swift                  # 用户信息
+│   ├── ChatConversation.swift             # 对话模型
+│   ├── ChatMessage.swift                  # 消息模型
+│   └── LLMConfig.swift                    # LLM 配置模型
 │
 ├── Utilities/
 │   ├── KeychainHelper.swift               # Keychain 封装
@@ -273,7 +313,41 @@ enum FileType {
 }
 ```
 
-### 3.6 同步引擎 (SyncEngine)
+### 3.6 AI Chat 模块 (LLMService)
+
+**统一接口**：
+```swift
+protocol LLMProvider {
+    var name: String { get }                    // "OpenAI", "Anthropic", "Custom"
+    var availableModels: [String] { get }
+    func sendMessage(
+        messages: [ChatMessage],
+        model: String,
+        stream: Bool
+    ) -> AsyncThrowingStream<String, Error>
+    func validateAPIKey() async throws -> Bool
+}
+
+class LLMService {
+    var activeProvider: LLMProvider
+    func chat(conversation: ChatConversation, context: String?) -> AsyncThrowingStream<String, Error>
+}
+```
+
+**上下文注入**：从编辑器进入 Chat 时，将当前文件内容作为 system message 注入：
+```
+System: 用户正在编辑文件 `hello.md`，内容如下：
+---
+{file content}
+---
+请基于此上下文回答用户的问题。
+```
+
+**对话持久化**：使用 SwiftData 存储对话和消息，支持离线查看历史。
+
+**Streaming**：通过 URLSession + SSE 解析实现流式输出，AI 回复逐字显示。
+
+### 3.7 同步引擎 (SyncEngine)
 
 负责协调离线编辑和远端同步：
 
@@ -299,6 +373,7 @@ enum FileType {
 | SwiftGit2 | 本地 Git 操作 | Swift Package Manager |
 | KeychainAccess | Keychain 封装 | Swift Package Manager |
 | Milkdown | WYSIWYG Markdown 编辑器 | npm build → 打包到 App Bundle |
+| SwiftData | 对话历史持久化 | iOS 17 内置 |
 
 **注意**：Milkdown 及其插件需要通过 npm 构建为单个 JS bundle，然后作为静态资源打包到 App 中。
 
@@ -332,11 +407,18 @@ enum FileType {
 - [x] Pull + 冲突检测
 - [x] 冲突处理 UI
 
-### Phase 5：离线 + 打磨（~1天）
-- [x] 离线编辑验证
-- [x] 同步状态指示
-- [x] 错误处理 & 用户提示
-- [x] 基本设置页
+### Phase 5：AI Chat（~2天）
+- [ ] LLMService 统一接口 + OpenAI / Anthropic adapter
+- [ ] Chat UI（对话列表 + 对话详情 + 流式输出）
+- [ ] 上下文注入（从编辑器携带文件内容）
+- [ ] 设置页：API Key 配置 + 模型选择
+- [ ] 对话历史持久化 (SwiftData)
+
+### Phase 6：离线 + 打磨（~1天）
+- [ ] 离线编辑验证
+- [ ] 同步状态指示
+- [ ] 错误处理 & 用户提示
+- [ ] 基本设置页完善
 
 ---
 
@@ -353,6 +435,8 @@ enum FileType {
 
 ## 7. 未来扩展（非 MVP）
 
+- AI 内联编辑（选中文字 → 改写/翻译/续写，类 Cursor 体验）
+- AI 直接修改文档（用户确认后应用 diff）
 - 分支切换、创建
 - PR / Issue 浏览
 - 全文搜索
