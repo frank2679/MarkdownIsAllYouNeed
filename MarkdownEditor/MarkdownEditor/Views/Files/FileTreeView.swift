@@ -7,6 +7,8 @@ struct FileTreeView: View {
     @State private var recentFiles: [String] = []
     @State private var isLoading = true
     @State private var selectedFile: FileSelection?
+    @State private var showGitPanel = false
+    @State private var changeCount = 0
 
     var body: some View {
         List {
@@ -46,9 +48,32 @@ struct FileTreeView: View {
         }
         .navigationTitle(repo.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink(value: "git-panel") {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.branch")
+                        if changeCount > 0 {
+                            Text("\(changeCount)")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(.orange, in: Capsule())
+                        }
+                    }
+                }
+            }
+        }
+        .navigationDestination(for: String.self) { value in
+            if value == "git-panel" {
+                GitPanelView(repo: repo)
+            }
+        }
         .task {
             loadFileTree()
             loadRecentFiles()
+            changeCount = GitCommitService.shared.detectChanges(repo: repo).count
         }
         .navigationDestination(item: $selectedFile) { selection in
             switch selection.fileType {

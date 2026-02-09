@@ -39,6 +39,9 @@
 		AA000030 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000030; };
 		AA000031 /* editor.js in Resources */ = {isa = PBXBuildFile; fileRef = BB000031; };
 		AA000032 /* editor.css in Resources */ = {isa = PBXBuildFile; fileRef = BB000032; };
+		AA000033 /* GitStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000033; };
+		AA000034 /* GitCommitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000034; };
+		AA000035 /* GitPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000035; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +77,9 @@
 		BB000030 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		BB000031 /* editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = editor.js; sourceTree = "<group>"; };
 		BB000032 /* editor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = editor.css; sourceTree = "<group>"; };
+		BB000033 /* GitStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitStatus.swift; sourceTree = "<group>"; };
+		BB000034 /* GitCommitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommitService.swift; sourceTree = "<group>"; };
+		BB000035 /* GitPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitPanelView.swift; sourceTree = "<group>"; };
 		CC000001 /* MarkdownEditor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarkdownEditor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -126,6 +132,7 @@
 				EE000011 /* Repos */,
 				EE000014 /* Files */,
 				EE000015 /* Editor */,
+				EE000017 /* Git */,
 				EE000012 /* Chat */,
 				EE000013 /* Settings */,
 			);
@@ -141,6 +148,14 @@
 				EE000016 /* WebView */,
 			);
 			path = Editor;
+			sourceTree = "<group>";
+		};
+		EE000017 /* Git */ = {
+			isa = PBXGroup;
+			children = (
+				BB000035 /* GitPanelView.swift */,
+			);
+			path = Git;
 			sourceTree = "<group>";
 		};
 		EE000016 /* WebView */ = {
@@ -173,6 +188,7 @@
 				BB000008 /* GitHubProvider.swift */,
 				BB000020 /* GitService.swift */,
 				BB000021 /* FileManagerService.swift */,
+				BB000034 /* GitCommitService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -183,6 +199,7 @@
 				BB000011 /* UserProfile.swift */,
 				BB000012 /* Repository.swift */,
 				BB000018 /* FileNode.swift */,
+				BB000033 /* GitStatus.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -347,6 +364,9 @@
 				AA000027 /* MarkdownEditorView.swift in Sources */,
 				AA000028 /* EditorToolbar.swift in Sources */,
 				AA000029 /* MarkdownEditorScreen.swift in Sources */,
+				AA000033 /* GitStatus.swift in Sources */,
+				AA000034 /* GitCommitService.swift in Sources */,
+				AA000035 /* GitPanelView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
