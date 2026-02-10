@@ -6,6 +6,7 @@ struct MarkdownEditorView: UIViewRepresentable {
     let fileName: String
     @Binding var isDirty: Bool
     var onContentChanged: ((String) -> Void)?
+    var onCoordinatorReady: ((Coordinator) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -27,22 +28,19 @@ struct MarkdownEditorView: UIViewRepresentable {
         webView.backgroundColor = .systemBackground
 
         // Load editor HTML from bundle
-        if let htmlURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "WebView") {
+        // Files are added as a group (not folder reference), so they're in the bundle root
+        if let htmlURL = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
         } else {
-            // Fallback: load from the project directory structure
-            let htmlPath = Bundle.main.bundlePath + "/WebView/index.html"
-            let htmlURL = URL(fileURLWithPath: htmlPath)
-            if FileManager.default.fileExists(atPath: htmlPath) {
-                webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
-            } else {
-                // Last resort: inline HTML
-                let html = Self.inlineEditorHTML()
-                webView.loadHTMLString(html, baseURL: fileURL.deletingLastPathComponent())
-            }
+            // Fallback: inline HTML
+            let html = Self.inlineEditorHTML()
+            webView.loadHTMLString(html, baseURL: fileURL.deletingLastPathComponent())
         }
 
         context.coordinator.webView = webView
+        DispatchQueue.main.async {
+            self.onCoordinatorReady?(context.coordinator)
+        }
         return webView
     }
 
@@ -103,7 +101,7 @@ struct MarkdownEditorView: UIViewRepresentable {
     }
 
     private static func editorJSSource() -> String {
-        if let jsURL = Bundle.main.url(forResource: "editor", withExtension: "js", subdirectory: "WebView"),
+        if let jsURL = Bundle.main.url(forResource: "editor", withExtension: "js"),
            let js = try? String(contentsOf: jsURL) {
             return js
         }
@@ -180,7 +178,13 @@ struct MarkdownEditorView: UIViewRepresentable {
             guard !contentLoaded else { return }
             contentLoaded = true
 
+            let fileExists = FileManager.default.fileExists(atPath: parent.fileURL.path)
+            print("[Editor] Loading file: \(parent.fileURL.path)")
+            print("[Editor] File exists: \(fileExists)")
+
             let markdown = FileManagerService.shared.readFileContent(at: parent.fileURL) ?? ""
+            print("[Editor] Content length: \(markdown.count)")
+
             let escaped = markdown
                 .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "'", with: "\\'")
@@ -188,7 +192,11 @@ struct MarkdownEditorView: UIViewRepresentable {
                 .replacingOccurrences(of: "\r", with: "")
 
             let js = "window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: '\(escaped)' } });"
-            webView?.evaluateJavaScript(js, completionHandler: nil)
+            webView?.evaluateJavaScript(js) { _, error in
+                if let error = error {
+                    print("[Editor] JS evaluation error: \(error)")
+                }
+            }
         }
 
         // MARK: - Public methods for Native → JS
