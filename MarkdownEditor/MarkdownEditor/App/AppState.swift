@@ -28,6 +28,12 @@ final class AppState: ObservableObject {
         }
     }
 
+    func loginWithPAT(_ token: String) async {
+        authService.loginWithPAT(token)
+        isAuthenticated = true
+        await loadUserProfile(token: token)
+    }
+
     func logout() {
         authService.logout()
         isAuthenticated = false

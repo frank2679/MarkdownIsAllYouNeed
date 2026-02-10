@@ -54,6 +54,10 @@ final class AuthService: NSObject {
         KeychainHelper.save(key: AppConstants.keychainGitHubToken, value: token)
     }
 
+    func loginWithPAT(_ token: String) {
+        KeychainHelper.save(key: AppConstants.keychainGitHubToken, value: token)
+    }
+
     func logout() {
         KeychainHelper.delete(key: AppConstants.keychainGitHubToken)
     }
