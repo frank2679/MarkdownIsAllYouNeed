@@ -164,38 +164,58 @@ final class GitService {
             try fileManager.createDirectory(at: dirURL, withIntermediateDirectories: true)
         }
 
-        // Download blobs (files)
+        // Download blobs (files) concurrently
         let blobs = tree.tree.filter { $0.type == "blob" }
         let total = blobs.count
+        let maxConcurrency = 8
 
-        for (index, blob) in blobs.enumerated() {
-            progress("Downloading \(index + 1)/\(total)...")
+        try await withThrowingTaskGroup(of: Int.self) { group in
+            var inFlight = 0
+            var completed = 0
 
-            let fileURL = localPath.appendingPathComponent(blob.path)
+            for blob in blobs {
+                guard blob.sha != nil else { continue }
 
-            // Ensure parent directory exists
-            let fileDir = fileURL.deletingLastPathComponent()
-            if !fileManager.fileExists(atPath: fileDir.path) {
-                try fileManager.createDirectory(at: fileDir, withIntermediateDirectories: true)
+                let blobPath = blob.path
+                group.addTask {
+                    let fileURL = localPath.appendingPathComponent(blobPath)
+                    let fileDir = fileURL.deletingLastPathComponent()
+                    if !FileManager.default.fileExists(atPath: fileDir.path) {
+                        try FileManager.default.createDirectory(at: fileDir, withIntermediateDirectories: true)
+                    }
+
+                    guard let encodedPath = blobPath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { return 1 }
+                    let contentURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/contents/\(encodedPath)?ref=\(repo.defaultBranch)")!
+                    var contentRequest = URLRequest(url: contentURL)
+                    contentRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    contentRequest.setValue("application/vnd.github.raw+json", forHTTPHeaderField: "Accept")
+
+                    do {
+                        let (fileData, fileResponse) = try await URLSession.shared.data(for: contentRequest)
+                        guard let httpResp = fileResponse as? HTTPURLResponse,
+                              (200...299).contains(httpResp.statusCode) else { return 1 }
+                        try fileData.write(to: fileURL)
+                    } catch {
+                        print("Skipped \(blobPath): \(error)")
+                    }
+                    return 1
+                }
+                inFlight += 1
+
+                // When we hit the concurrency limit, wait for one to finish
+                if inFlight >= maxConcurrency {
+                    if let _ = try await group.next() {
+                        completed += 1
+                        inFlight -= 1
+                        progress("Downloading \(completed)/\(total)...")
+                    }
+                }
             }
 
-            // Download file content via blob API
-            guard let blobSHA = blob.sha else { continue }
-
-            // Use the raw content API for simplicity
-            let contentURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/contents/\(blob.path)?ref=\(repo.defaultBranch)")!
-            var contentRequest = URLRequest(url: contentURL)
-            contentRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            contentRequest.setValue("application/vnd.github.raw+json", forHTTPHeaderField: "Accept")
-
-            do {
-                let (fileData, fileResponse) = try await URLSession.shared.data(for: contentRequest)
-                guard let httpResp = fileResponse as? HTTPURLResponse,
-                      (200...299).contains(httpResp.statusCode) else { continue }
-                try fileData.write(to: fileURL)
-            } catch {
-                // Skip files that fail to download (e.g., too large)
-                print("Skipped \(blob.path): \(error)")
+            // Wait for remaining tasks
+            for try await _ in group {
+                completed += 1
+                progress("Downloading \(completed)/\(total)...")
             }
         }
 

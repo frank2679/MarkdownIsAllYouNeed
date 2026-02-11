@@ -7,38 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA000001 /* MarkdownEditorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001; };
-		AA000002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000002; };
-		AA000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003; };
-		AA000004 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000004; };
-		AA000005 /* RepoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000005; };
-		AA000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000006; };
-		AA000007 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000007; };
-		AA000008 /* GitHubProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000008; };
-		AA000009 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000009; };
-		AA000010 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000010; };
-		AA000011 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000011; };
-		AA000012 /* Repository.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000012; };
-		AA000013 /* RemoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000013; };
-		AA000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB000014; };
-		AA000015 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000015; };
-		AA000016 /* RepoRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000016; };
-		AA000017 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000017; };
-		AA000018 /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000018; };
-		AA000019 /* FileTypeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000019; };
-		AA000020 /* GitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000020; };
-		AA000021 /* FileManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000021; };
-		AA000022 /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000022; };
-		AA000023 /* FileNodeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000023; };
-		AA000024 /* TextFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000024; };
-		AA000025 /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000025; };
-		AA000026 /* BinaryFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000026; };
-		AA000027 /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000027; };
-		AA000028 /* EditorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000028; };
-		AA000029 /* MarkdownEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000029; };
-		AA000030 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000030; };
-		AA000031 /* editor.js in Resources */ = {isa = PBXBuildFile; fileRef = BB000031; };
-		AA000032 /* editor.css in Resources */ = {isa = PBXBuildFile; fileRef = BB000032; };
+		AA000001 /* MarkdownEditorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001 /* MarkdownEditorApp.swift */; };
+		AA000002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000002 /* AppState.swift */; };
+		AA000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003 /* ContentView.swift */; };
+		AA000004 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000004 /* LoginView.swift */; };
+		AA000005 /* RepoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000005 /* RepoListView.swift */; };
+		AA000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000006 /* SettingsView.swift */; };
+		AA000007 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000007 /* AuthService.swift */; };
+		AA000008 /* GitHubProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000008 /* GitHubProvider.swift */; };
+		AA000009 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000009 /* KeychainHelper.swift */; };
+		AA000010 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000010 /* Constants.swift */; };
+		AA000011 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000011 /* UserProfile.swift */; };
+		AA000012 /* Repository.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000012 /* Repository.swift */; };
+		AA000013 /* RemoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000013 /* RemoteProvider.swift */; };
+		AA000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB000014 /* Assets.xcassets */; };
+		AA000015 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000015 /* ChatListView.swift */; };
+		AA000016 /* RepoRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000016 /* RepoRowView.swift */; };
+		AA000017 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000017 /* ProfileView.swift */; };
+		AA000018 /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000018 /* FileNode.swift */; };
+		AA000019 /* FileTypeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000019 /* FileTypeDetector.swift */; };
+		AA000020 /* GitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000020 /* GitService.swift */; };
+		AA000021 /* FileManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000021 /* FileManagerService.swift */; };
+		AA000022 /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000022 /* FileTreeView.swift */; };
+		AA000023 /* FileNodeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000023 /* FileNodeRow.swift */; };
+		AA000024 /* TextFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000024 /* TextFileView.swift */; };
+		AA000025 /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000025 /* ImagePreviewView.swift */; };
+		AA000026 /* BinaryFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000026 /* BinaryFileView.swift */; };
+		AA000027 /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000027 /* MarkdownEditorView.swift */; };
+		AA000028 /* EditorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000028 /* EditorToolbar.swift */; };
+		AA000029 /* MarkdownEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000029 /* MarkdownEditorScreen.swift */; };
+		AA000030 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000030 /* index.html */; };
+		AA000031 /* editor.js in Resources */ = {isa = PBXBuildFile; fileRef = BB000031 /* editor.js */; };
+		AA000032 /* editor.css in Resources */ = {isa = PBXBuildFile; fileRef = BB000032 /* editor.css */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -132,39 +132,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		EE000015 /* Editor */ = {
-			isa = PBXGroup;
-			children = (
-				BB000027 /* MarkdownEditorView.swift */,
-				BB000028 /* EditorToolbar.swift */,
-				BB000029 /* MarkdownEditorScreen.swift */,
-				EE000016 /* WebView */,
-			);
-			path = Editor;
-			sourceTree = "<group>";
-		};
-		EE000016 /* WebView */ = {
-			isa = PBXGroup;
-			children = (
-				BB000030 /* index.html */,
-				BB000031 /* editor.js */,
-				BB000032 /* editor.css */,
-			);
-			path = WebView;
-			sourceTree = "<group>";
-		};
-		EE000014 /* Files */ = {
-			isa = PBXGroup;
-			children = (
-				BB000022 /* FileTreeView.swift */,
-				BB000023 /* FileNodeRow.swift */,
-				BB000024 /* TextFileView.swift */,
-				BB000025 /* ImagePreviewView.swift */,
-				BB000026 /* BinaryFileView.swift */,
-			);
-			path = Files;
-			sourceTree = "<group>";
-		};
 		EE000005 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -239,6 +206,39 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		EE000014 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				BB000022 /* FileTreeView.swift */,
+				BB000023 /* FileNodeRow.swift */,
+				BB000024 /* TextFileView.swift */,
+				BB000025 /* ImagePreviewView.swift */,
+				BB000026 /* BinaryFileView.swift */,
+			);
+			path = Files;
+			sourceTree = "<group>";
+		};
+		EE000015 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				BB000027 /* MarkdownEditorView.swift */,
+				BB000028 /* EditorToolbar.swift */,
+				BB000029 /* MarkdownEditorScreen.swift */,
+				EE000016 /* WebView */,
+			);
+			path = Editor;
+			sourceTree = "<group>";
+		};
+		EE000016 /* WebView */ = {
+			isa = PBXGroup;
+			children = (
+				BB000030 /* index.html */,
+				BB000031 /* editor.js */,
+				BB000032 /* editor.css */,
+			);
+			path = WebView;
+			sourceTree = "<group>";
+		};
 		EE000099 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -252,7 +252,7 @@
 /* Begin PBXNativeTarget section */
 		FF000001 /* MarkdownEditor */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FF000010;
+			buildConfigurationList = FF000010 /* Build configuration list for PBXNativeTarget "MarkdownEditor" */;
 			buildPhases = (
 				FF000002 /* Sources */,
 				DD000001 /* Frameworks */,
@@ -282,7 +282,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FF000098;
+			buildConfigurationList = FF000098 /* Build configuration list for PBXProject "MarkdownEditor" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -477,8 +477,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = CS4FUGSG89;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MarkdownEditor/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -489,7 +490,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.frank2679.MarkdownEditor;
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankyoung2679.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -504,8 +505,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = CS4FUGSG89;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MarkdownEditor/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -516,7 +518,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.frank2679.MarkdownEditor;
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankyoung2679.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -527,20 +529,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FF000098 /* Build configuration list for PBXProject */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				GG000001 /* Debug */,
-				GG000002 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		FF000010 /* Build configuration list for PBXNativeTarget */ = {
+		FF000010 /* Build configuration list for PBXNativeTarget "MarkdownEditor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				GG000003 /* Debug */,
 				GG000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FF000098 /* Build configuration list for PBXProject "MarkdownEditor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				GG000001 /* Debug */,
+				GG000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
