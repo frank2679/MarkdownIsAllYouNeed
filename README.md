@@ -2,7 +2,7 @@
 
 > 使用 Markdown 作为你的工作语言，随时随地在 iPhone 上编辑 GitHub 仓库中的 Markdown 文件。
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-iOS%2017%2B-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -47,8 +47,8 @@
 
 | Version | Milestone | Description |
 |---------|-----------|-------------|
-| **0.1.0** | **MVP-0 (Phase 1–4)** | **End-to-end workflow — current release** |
-| 0.2.0 | MVP-1 (Phase 5–6) | Editor enhancements + Git enhancements |
+| 0.1.0 | MVP-0 (Phase 1–4) | End-to-end workflow |
+| **0.2.0** | **MVP-1 (Phase 5–6)** | **Editor enhancements + Git enhancements — current release** |
 | 0.3.0 | MVP-1 (Phase 7) | AI Chat integration |
 | 0.4.0 | MVP-1 (Phase 8) | Polish & refinements |
 | 1.0.0 | App Store | First public release |

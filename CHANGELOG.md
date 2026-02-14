@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-15
+
+### Added
+- Markdown table rendering and alignment support in the editor.
+- Support for viewing and tracking hidden files (like `.gitignore`).
+- Custom Markdown-themed app icon.
+
+### Fixed
+- Robust local file status detection using standardized paths, fixing false "deleted" status on iOS.
+- Excessive line spacing in code blocks and tables by improving paragraph wrapping logic.
+- Safe Markdown content transfer to WebView using JSON encoding.
+
 ## [0.1.0] - 2026-02-14
 
 MVP-0 release: end-to-end workflow from GitHub login to editing and pushing Markdown files.
@@ -42,5 +54,6 @@ MVP-0 release: end-to-end workflow from GitHub login to editing and pushing Mark
 - Technical Design Document (DESIGN.md)
 - AI Chat feature specification and UI wireframes
 
-[Unreleased]: https://github.com/nicekate/MarkdownIsAllYouNeed/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nicekate/MarkdownIsAllYouNeed/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/nicekate/MarkdownIsAllYouNeed/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/nicekate/MarkdownIsAllYouNeed/releases/tag/v0.1.0
