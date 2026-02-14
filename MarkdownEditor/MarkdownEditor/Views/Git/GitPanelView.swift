@@ -11,6 +11,7 @@ struct GitPanelView: View {
     @State private var isLoading = false
     @State private var isPushing = false
     @State private var isPulling = false
+    @State private var alertTitle = ""
     @State private var alertMessage: String?
     @State private var showAlert = false
     @State private var showConflictAlert = false
@@ -161,7 +162,7 @@ struct GitPanelView: View {
         .task {
             await refreshStatus()
         }
-        .alert("Error", isPresented: $showAlert) {
+        .alert(alertTitle, isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             if let alertMessage {
@@ -224,9 +225,9 @@ struct GitPanelView: View {
             let result = try await GitService.shared.pull(repo: repo, token: token)
             switch result {
             case .upToDate:
-                showError("Already up to date")
+                showInfo("Already up to date")
             case .updated(let count):
-                showError("\(count) file\(count == 1 ? "" : "s") updated")
+                showInfo("\(count) file\(count == 1 ? "" : "s") updated")
             case .conflicts(let files):
                 showError("Conflicts in: \(files.joined(separator: ", "))")
             }
@@ -302,7 +303,14 @@ struct GitPanelView: View {
         isPushing = false
     }
 
+    private func showInfo(_ message: String) {
+        alertTitle = "Git"
+        alertMessage = message
+        showAlert = true
+    }
+
     private func showError(_ message: String) {
+        alertTitle = "Error"
         alertMessage = message
         showAlert = true
     }
