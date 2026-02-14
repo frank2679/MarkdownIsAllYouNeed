@@ -125,15 +125,89 @@
         // Wrap consecutive <li> in <ul>
         html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
 
+        // Merge adjacent blockquotes
+        html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
+
+        // Tables (must run before paragraph wrapping)
+        html = parseTables(html);
+
         // Paragraphs: wrap remaining text blocks
         html = html.replace(/^(?!<[hupbloitd]|<\/|<hr|<img|<a )(.+)$/gm, '<p>$1</p>');
 
         // Clean up empty paragraphs
         html = html.replace(/<p><\/p>/g, '');
 
-        // Merge adjacent blockquotes
-        html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
+        return html;
+    }
 
+    function parseTables(html) {
+        const lines = html.split('\n');
+        let inTable = false;
+        let tableLines = [];
+        let newLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('|') && line.endsWith('|')) {
+                if (!inTable) {
+                    inTable = true;
+                    tableLines = [line];
+                } else {
+                    tableLines.push(line);
+                }
+            } else {
+                if (inTable) {
+                    newLines.push(renderTable(tableLines));
+                    inTable = false;
+                    tableLines = [];
+                }
+                newLines.push(lines[i]);
+            }
+        }
+        if (inTable) {
+            newLines.push(renderTable(tableLines));
+        }
+        return newLines.join('\n');
+    }
+
+    function renderTable(lines) {
+        if (lines.length < 2) return lines.join('\n');
+
+        // Check for separator line (| --- | --- |)
+        const separatorLine = lines[1].trim();
+        const hasSeparator = separatorLine.match(/^\|?\s*:?-+:?\s*(\|?\s*:?-+:?\s*\|?)*$/);
+        if (!hasSeparator) return lines.join('\n');
+
+        // Extract alignments from separator
+        const alignments = separatorLine.split('|')
+            .filter((_, i, arr) => i > 0 && i < arr.length - 1)
+            .map(s => {
+                const trimmed = s.trim();
+                if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+                if (trimmed.endsWith(':')) return 'right';
+                return 'left';
+            });
+
+        let html = '<table>';
+        lines.forEach((line, index) => {
+            if (index === 1) return; // Skip separator
+
+            const cells = line.trim().split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
+            const tag = index === 0 ? 'th' : 'td';
+            
+            if (index === 0) html += '<thead>';
+            if (index === 2) html += '<tbody>';
+            
+            html += '<tr>';
+            cells.forEach((cell, i) => {
+                const align = alignments[i] || 'left';
+                html += '<' + tag + ' style="text-align: ' + align + '">' + cell.trim() + '</' + tag + '>';
+            });
+            html += '</tr>';
+
+            if (index === 0) html += '</thead>';
+        });
+        html += '</tbody></table>';
         return html;
     }
 
