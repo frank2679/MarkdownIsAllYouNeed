@@ -131,8 +131,22 @@
         // Tables (must run before paragraph wrapping)
         html = parseTables(html);
 
+        // --- Paragraph Wrapping ---
+        // To prevent wrapping lines INSIDE <pre> or <table> tags into paragraphs,
+        // we temporarily extract them and replace with placeholders.
+        const blocks = [];
+        html = html.replace(/<(pre|table)[\s\S]*?<\/\1>/g, function(match) {
+            blocks.push(match);
+            return '<!--BLOCK' + (blocks.length - 1) + '-->';
+        });
+
         // Paragraphs: wrap remaining text blocks
-        html = html.replace(/^(?!<[hupbloitd]|<\/|<hr|<img|<a )(.+)$/gm, '<p>$1</p>');
+        html = html.replace(/^(?!<[hupbloitd]|<\/|<hr|<img|<a |<!--)(.+)$/gm, '<p>$1</p>');
+
+        // Restore blocks
+        html = html.replace(/<!--BLOCK(\d+)-->/g, function(_, index) {
+            return blocks[parseInt(index)];
+        });
 
         // Clean up empty paragraphs
         html = html.replace(/<p><\/p>/g, '');
