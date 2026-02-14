@@ -1,0 +1,14 @@
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+//
+// Copy this file to Debug.xcconfig and fill in your GitHub OAuth App credentials.
+// Do NOT commit Debug.xcconfig to version control.
+//
+// To create a GitHub OAuth App:
+// 1. Go to https://github.com/settings/developers
+// 2. Click "New OAuth App"
+// 3. Set Authorization callback URL to: markdowneditor://oauth/callback
+// 4. Copy Client ID and Client Secret here
+
+GITHUB_CLIENT_ID = your_client_id_here
+GITHUB_CLIENT_SECRET = your_client_secret_here

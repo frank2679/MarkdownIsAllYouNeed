@@ -26,3 +26,4 @@ Pods/
 # Secrets - never commit
 *.env
 credentials.json
+Config/Debug.xcconfig

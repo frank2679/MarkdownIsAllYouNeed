@@ -1,10 +1,13 @@
 import Foundation
 
 enum AppConstants {
-    // MARK: - GitHub OAuth
-    // TODO: Replace with your own GitHub OAuth App credentials
-    static let githubClientID = "YOUR_GITHUB_CLIENT_ID"
-    static let githubClientSecret = "YOUR_GITHUB_CLIENT_SECRET"
+    // MARK: - GitHub OAuth (loaded from xcconfig via Info.plist)
+    static let githubClientID: String = {
+        Bundle.main.infoDictionary?["GitHubClientID"] as? String ?? ""
+    }()
+    static let githubClientSecret: String = {
+        Bundle.main.infoDictionary?["GitHubClientSecret"] as? String ?? ""
+    }()
     static let githubCallbackURL = "markdowneditor://oauth/callback"
     static let githubScopes = "repo,user"
 
