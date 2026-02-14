@@ -68,7 +68,11 @@ struct TextFileView: View {
     }
 
     private func loadContent() {
+        let fileExists = FileManager.default.fileExists(atPath: fileURL.path)
+        print("[TextFile] Loading: \(fileURL.path)")
+        print("[TextFile] File exists: \(fileExists)")
         content = FileManagerService.shared.readFileContent(at: fileURL) ?? ""
+        print("[TextFile] Content length: \(content.count)")
         originalContent = content
     }
 

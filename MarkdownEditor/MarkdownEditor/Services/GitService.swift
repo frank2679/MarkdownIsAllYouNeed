@@ -53,46 +53,83 @@ final class GitService {
         let originalsPath = localPath.appendingPathComponent(originalsDir)
         try fileManager.createDirectory(at: originalsPath, withIntermediateDirectories: true)
 
-        // Download blobs (files)
+        // Download blobs (files) concurrently
         let blobs = tree.tree.filter { $0.type == "blob" }
         let total = blobs.count
+        let maxConcurrency = 8
         var trackedFiles: [String: TrackedFile] = [:]
 
-        for (index, blob) in blobs.enumerated() {
-            progress("Downloading \(index + 1)/\(total)...")
+        let results = try await withThrowingTaskGroup(of: (String, String, String)?.self) { group in
+            var inFlight = 0
+            var completed = 0
+            var collected: [(String, String, String)] = []
 
-            let fileURL = localPath.appendingPathComponent(blob.path)
+            for blob in blobs {
+                let blobPath = blob.path
+                let capturedSHA = blob.sha
+                group.addTask {
+                    let fileURL = localPath.appendingPathComponent(blobPath)
+                    let fileDir = fileURL.deletingLastPathComponent()
+                    if !FileManager.default.fileExists(atPath: fileDir.path) {
+                        try FileManager.default.createDirectory(at: fileDir, withIntermediateDirectories: true)
+                    }
 
-            // Ensure parent directory exists
-            let fileDir = fileURL.deletingLastPathComponent()
-            if !fileManager.fileExists(atPath: fileDir.path) {
-                try fileManager.createDirectory(at: fileDir, withIntermediateDirectories: true)
-            }
+                    guard let encodedPath = blobPath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { return nil }
+                    let contentURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/contents/\(encodedPath)?ref=\(repo.defaultBranch)")!
+                    var contentRequest = URLRequest(url: contentURL)
+                    contentRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    contentRequest.setValue("application/vnd.github.raw+json", forHTTPHeaderField: "Accept")
 
-            let blobSHA = blob.sha
+                    do {
+                        let (fileData, fileResponse) = try await URLSession.shared.data(for: contentRequest)
+                        guard let httpResp = fileResponse as? HTTPURLResponse,
+                              (200...299).contains(httpResp.statusCode) else { return nil }
+                        try fileData.write(to: fileURL)
 
-            // Download file content via raw content API
-            do {
-                let fileData = try await provider.getFileContent(
-                    owner: owner, repo: repoName,
-                    path: blob.path, ref: repo.defaultBranch
-                )
-                try fileData.write(to: fileURL)
+                        // Compute content hash for tracking
+                        let contentHash = ContentHasher.sha256(data: fileData)
 
-                // Track file with content hash
-                let contentHash = ContentHasher.sha256(data: fileData)
-                trackedFiles[blob.path] = TrackedFile(sha: blobSHA, originalContentHash: contentHash)
+                        // Copy to .originals for offline diff
+                        let originalsBase = localPath.appendingPathComponent(".originals")
+                        let originalURL = originalsBase.appendingPathComponent(blobPath)
+                        let originalDir = originalURL.deletingLastPathComponent()
+                        if !FileManager.default.fileExists(atPath: originalDir.path) {
+                            try FileManager.default.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                        }
+                        try fileData.write(to: originalURL)
 
-                // Copy to .originals for offline diff
-                let originalURL = originalsPath.appendingPathComponent(blob.path)
-                let originalDir = originalURL.deletingLastPathComponent()
-                if !fileManager.fileExists(atPath: originalDir.path) {
-                    try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                        return (blobPath, capturedSHA, contentHash)
+                    } catch {
+                        print("Skipped \(blobPath): \(error)")
+                        return nil
+                    }
                 }
-                try fileData.write(to: originalURL)
-            } catch {
-                print("Skipped \(blob.path): \(error)")
+                inFlight += 1
+
+                // When we hit the concurrency limit, wait for one to finish
+                if inFlight >= maxConcurrency {
+                    if let result = try await group.next() {
+                        completed += 1
+                        inFlight -= 1
+                        progress("Downloading \(completed)/\(total)...")
+                        if let r = result { collected.append(r) }
+                    }
+                }
             }
+
+            // Wait for remaining tasks
+            for try await result in group {
+                completed += 1
+                progress("Downloading \(completed)/\(total)...")
+                if let r = result { collected.append(r) }
+            }
+
+            return collected
+        }
+
+        // Build tracked files from results
+        for (path, sha, contentHash) in results {
+            trackedFiles[path] = TrackedFile(sha: sha, originalContentHash: contentHash)
         }
 
         // Save snapshot

@@ -7,8 +7,12 @@ final class FileManagerService {
 
     /// Build a file tree from a local repo directory
     func buildFileTree(at rootURL: URL) -> [FileNode] {
+        buildFileTree(at: rootURL, repoRoot: rootURL)
+    }
+
+    private func buildFileTree(at directoryURL: URL, repoRoot: URL) -> [FileNode] {
         guard let contents = try? fm.contentsOfDirectory(
-            at: rootURL,
+            at: directoryURL,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         ) else {
@@ -24,10 +28,10 @@ final class FileManagerService {
             if name == ".repo-metadata.json" || name == ".originals" { continue }
 
             let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-            let relativePath = url.path.replacingOccurrences(of: rootURL.path + "/", with: "")
+            let relativePath = url.path.replacingOccurrences(of: repoRoot.path + "/", with: "")
 
             if isDirectory {
-                let children = buildFileTree(at: url)
+                let children = buildFileTree(at: url, repoRoot: repoRoot)
                 let node = FileNode(
                     name: name,
                     path: relativePath,

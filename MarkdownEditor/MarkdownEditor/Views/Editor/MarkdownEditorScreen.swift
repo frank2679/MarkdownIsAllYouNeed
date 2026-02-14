@@ -11,7 +11,6 @@ struct MarkdownEditorScreen: View {
     @State private var currentMarkdown = ""
     @State private var isSaving = false
     @State private var showSavedToast = false
-    @State private var editorView: MarkdownEditorView?
     @State private var coordinatorRef: MarkdownEditorView.Coordinator?
 
     var body: some View {
@@ -28,12 +27,11 @@ struct MarkdownEditorScreen: View {
                 isDirty: $isDirty,
                 onContentChanged: { markdown in
                     currentMarkdown = markdown
+                },
+                onCoordinatorReady: { coordinator in
+                    coordinatorRef = coordinator
                 }
             )
-            .onAppear {
-                // We need to get a reference to the coordinator
-                // This is handled via the binding and callback pattern
-            }
         }
         .navigationTitle(fileName)
         .navigationBarTitleDisplayMode(.inline)

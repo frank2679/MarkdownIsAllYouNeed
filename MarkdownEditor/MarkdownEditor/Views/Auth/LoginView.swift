@@ -3,6 +3,8 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject var appState: AppState
     @State private var isLoading = false
+    @State private var showPATInput = false
+    @State private var patText = ""
 
     var body: some View {
         VStack(spacing: 24) {
@@ -46,6 +48,42 @@ struct LoginView: View {
             }
             .disabled(isLoading)
             .padding(.horizontal, 40)
+
+            Button {
+                showPATInput.toggle()
+            } label: {
+                Text("Use Personal Access Token")
+                    .font(.footnote)
+                    .foregroundStyle(.blue)
+            }
+
+            if showPATInput {
+                VStack(spacing: 12) {
+                    SecureField("Paste your GitHub PAT here", text: $patText)
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+
+                    Button {
+                        let token = patText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !token.isEmpty else { return }
+                        isLoading = true
+                        Task {
+                            await appState.loginWithPAT(token)
+                            isLoading = false
+                        }
+                    } label: {
+                        Text("Sign in with PAT")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(.green)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .disabled(patText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                }
+                .padding(.horizontal, 40)
+            }
 
             Spacer()
                 .frame(height: 60)
