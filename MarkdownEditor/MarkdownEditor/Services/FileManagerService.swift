@@ -20,8 +20,8 @@ final class FileManagerService {
         for url in contents {
             let name = url.lastPathComponent
 
-            // Skip metadata file
-            if name == ".repo-metadata.json" { continue }
+            // Skip metadata and originals
+            if name == ".repo-metadata.json" || name == ".originals" { continue }
 
             let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             let relativePath = url.path.replacingOccurrences(of: rootURL.path + "/", with: "")
@@ -49,6 +49,27 @@ final class FileManagerService {
         }
 
         return nodes.sorted()
+    }
+
+    /// Build a file tree annotated with change status from a list of FileChanges.
+    func buildFileTree(at rootURL: URL, changes: [FileChange]) -> [FileNode] {
+        let changeMap = Dictionary(uniqueKeysWithValues: changes.map { ($0.path, $0.changeType) })
+        var nodes = buildFileTree(at: rootURL)
+        annotateNodes(&nodes, changeMap: changeMap)
+        return nodes
+    }
+
+    /// Recursively annotate nodes with their change type.
+    private func annotateNodes(_ nodes: inout [FileNode], changeMap: [String: FileChangeType]) {
+        for i in nodes.indices {
+            if let changeType = changeMap[nodes[i].path] {
+                nodes[i].changeType = changeType
+            }
+            if var children = nodes[i].children {
+                annotateNodes(&children, changeMap: changeMap)
+                nodes[i].children = children
+            }
+        }
     }
 
     /// Read file content as string

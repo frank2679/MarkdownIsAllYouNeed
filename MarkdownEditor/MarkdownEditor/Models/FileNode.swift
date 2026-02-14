@@ -8,6 +8,7 @@ struct FileNode: Identifiable, Comparable {
     let fileType: FileType
     var children: [FileNode]?
     var isExpanded: Bool = false
+    var changeType: FileChangeType? = nil
 
     static func < (lhs: FileNode, rhs: FileNode) -> Bool {
         if lhs.isDirectory != rhs.isDirectory {

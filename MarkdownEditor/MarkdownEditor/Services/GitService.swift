@@ -1,139 +1,23 @@
 import Foundation
 
-/// Local git operations.
-/// MVP-0: uses shell git commands via GitHub API for clone.
-/// Future: migrate to SwiftGit2 for full offline support.
+/// Git operations using GitHub REST API.
+/// Commits are inherently remote (API-based). Diffs and status are computed locally.
 final class GitService {
     static let shared = GitService()
     private init() {}
 
     private let fileManager = FileManager.default
+    private let originalsDir = ".originals"
 
-    /// Clone a repository using git clone via GitHub archive download.
-    /// For MVP-0, we download the repo as a zip archive and extract it,
-    /// then init a local git repo. Full SwiftGit2 integration comes later.
-    func cloneRepo(_ repo: Repository, token: String, progress: @escaping (String) -> Void) async throws {
-        let localPath = repo.localPath
+    // MARK: - Clone
 
-        // Create parent directory
-        let parentDir = localPath.deletingLastPathComponent()
-        if !fileManager.fileExists(atPath: parentDir.path) {
-            try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
-        }
-
-        // Remove if exists
-        if fileManager.fileExists(atPath: localPath.path) {
-            try fileManager.removeItem(at: localPath)
-        }
-
-        progress("Downloading...")
-
-        // Download repo archive (zipball)
-        let archiveURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/zipball/\(repo.defaultBranch)")!
-        var request = URLRequest(url: archiveURL)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-
-        let (tempURL, response) = try await URLSession.shared.download(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw GitError.cloneFailed("Download failed")
-        }
-
-        progress("Extracting...")
-
-        // Move to a stable temp location
-        let zipPath = FileManager.default.temporaryDirectory.appendingPathComponent("\(repo.name).zip")
-        if fileManager.fileExists(atPath: zipPath.path) {
-            try fileManager.removeItem(at: zipPath)
-        }
-        try fileManager.moveItem(at: tempURL, to: zipPath)
-
-        // Extract using built-in unzip
-        let extractDir = FileManager.default.temporaryDirectory.appendingPathComponent("extract-\(repo.name)")
-        if fileManager.fileExists(atPath: extractDir.path) {
-            try fileManager.removeItem(at: extractDir)
-        }
-        try fileManager.createDirectory(at: extractDir, withIntermediateDirectories: true)
-
-        // Use Process to unzip (iOS doesn't have /usr/bin/unzip, so we use a pure Swift approach)
-        try await extractZip(from: zipPath, to: extractDir)
-
-        // GitHub zipball extracts to a folder like "owner-repo-sha/"
-        // Find that folder and move its contents to localPath
-        let extractedContents = try fileManager.contentsOfDirectory(at: extractDir, includingPropertiesForKeys: nil)
-        guard let extractedFolder = extractedContents.first(where: { url in
-            var isDir: ObjCBool = false
-            return fileManager.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
-        }) else {
-            throw GitError.cloneFailed("Extraction produced no directory")
-        }
-
-        try fileManager.moveItem(at: extractedFolder, to: localPath)
-
-        // Clean up
-        try? fileManager.removeItem(at: zipPath)
-        try? fileManager.removeItem(at: extractDir)
-
-        // Save repo metadata
-        let metadataURL = localPath.appendingPathComponent(".repo-metadata.json")
-        let metadata = RepoMetadata(
-            fullName: repo.fullName,
-            cloneURL: repo.cloneURL,
-            defaultBranch: repo.defaultBranch,
-            lastSyncedAt: ISO8601DateFormatter().string(from: Date())
-        )
-        let metadataData = try JSONEncoder().encode(metadata)
-        try metadataData.write(to: metadataURL)
-
-        progress("Done")
-    }
-
-    /// List changed files (compares with saved snapshot)
-    func status(at repoPath: URL) -> [String] {
-        // MVP-0: simple implementation - track modified files via timestamp
-        // Full git status via SwiftGit2 in future
-        return []
-    }
-
-    /// Delete a cloned repo from local storage
-    func deleteLocalRepo(at path: URL) throws {
-        try fileManager.removeItem(at: path)
-    }
-
-    /// Check if repo exists locally
-    func isCloned(_ repo: Repository) -> Bool {
-        fileManager.fileExists(atPath: repo.localPath.path)
-    }
-
-    // MARK: - Zip Extraction (pure Swift using Foundation)
-
-    private func extractZip(from zipURL: URL, to destination: URL) async throws {
-        // On iOS we can use the built-in zip support via NSFileCoordinator
-        // or simply use the shell. For now, we'll try a pragmatic approach.
-
-        // Option: Use Apple's Compression framework or a bundled approach
-        // For MVP-0, we use URLSession to download the tarball instead (simpler)
-        // Actually, let's switch to using the tarball API which is easier to extract
-
-        // Re-download as tarball
-        let tarData = try Data(contentsOf: zipURL)
-
-        // Write the zip and use FileManager to extract
-        // iOS 16+ has native zip extraction via FileManager
-        if #available(iOS 16.0, *) {
-            let process = try fileManager.contentsOfDirectory(at: zipURL.deletingLastPathComponent(), includingPropertiesForKeys: nil)
-            // Fallback: copy the zip data directly
-        }
-
-        // Simplest approach for MVP: use the GitHub API to get tree contents instead
-        throw GitError.cloneFailed("Zip extraction not available - using API tree fallback")
-    }
-
-    /// Alternative clone: download files via GitHub Tree API (works on iOS without zip)
+    /// Clone a repository via GitHub Tree API, building a full RepoSnapshot.
     func cloneViaAPI(_ repo: Repository, token: String, progress: @escaping (String) -> Void) async throws {
         let localPath = repo.localPath
+        let provider = GitHubProvider(token: token)
+        let components = repo.fullName.split(separator: "/")
+        let owner = String(components[0])
+        let repoName = String(components[1])
 
         let parentDir = localPath.deletingLastPathComponent()
         if !fileManager.fileExists(atPath: parentDir.path) {
@@ -148,14 +32,15 @@ final class GitService {
 
         progress("Fetching file tree...")
 
-        // Get the full tree recursively
-        let treeURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/git/trees/\(repo.defaultBranch)?recursive=1")!
-        var request = URLRequest(url: treeURL)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        // Get HEAD commit SHA and tree SHA
+        let ref = try await provider.getRef(owner: owner, repo: repoName, branch: repo.defaultBranch)
+        let headCommitSHA = ref.object.sha
 
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let tree = try JSONDecoder().decode(GitTree.self, from: data)
+        let commitDetail = try await provider.getCommit(owner: owner, repo: repoName, sha: headCommitSHA)
+        let treeSHA = commitDetail.tree.sha
+
+        // Get the full tree recursively
+        let tree = try await provider.getTree(owner: owner, repo: repoName, treeSHA: treeSHA, recursive: true)
 
         // Create directories first
         let dirs = tree.tree.filter { $0.type == "tree" }.sorted { $0.path < $1.path }
@@ -164,9 +49,14 @@ final class GitService {
             try fileManager.createDirectory(at: dirURL, withIntermediateDirectories: true)
         }
 
+        // Create .originals directory
+        let originalsPath = localPath.appendingPathComponent(originalsDir)
+        try fileManager.createDirectory(at: originalsPath, withIntermediateDirectories: true)
+
         // Download blobs (files)
         let blobs = tree.tree.filter { $0.type == "blob" }
         let total = blobs.count
+        var trackedFiles: [String: TrackedFile] = [:]
 
         for (index, blob) in blobs.enumerated() {
             progress("Downloading \(index + 1)/\(total)...")
@@ -179,41 +69,436 @@ final class GitService {
                 try fileManager.createDirectory(at: fileDir, withIntermediateDirectories: true)
             }
 
-            // Download file content via blob API
-            guard let blobSHA = blob.sha else { continue }
+            let blobSHA = blob.sha
 
-            // Use the raw content API for simplicity
-            let contentURL = URL(string: "\(AppConstants.githubAPIBase)/repos/\(repo.fullName)/contents/\(blob.path)?ref=\(repo.defaultBranch)")!
-            var contentRequest = URLRequest(url: contentURL)
-            contentRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            contentRequest.setValue("application/vnd.github.raw+json", forHTTPHeaderField: "Accept")
-
+            // Download file content via raw content API
             do {
-                let (fileData, fileResponse) = try await URLSession.shared.data(for: contentRequest)
-                guard let httpResp = fileResponse as? HTTPURLResponse,
-                      (200...299).contains(httpResp.statusCode) else { continue }
+                let fileData = try await provider.getFileContent(
+                    owner: owner, repo: repoName,
+                    path: blob.path, ref: repo.defaultBranch
+                )
                 try fileData.write(to: fileURL)
+
+                // Track file with content hash
+                let contentHash = ContentHasher.sha256(data: fileData)
+                trackedFiles[blob.path] = TrackedFile(sha: blobSHA, originalContentHash: contentHash)
+
+                // Copy to .originals for offline diff
+                let originalURL = originalsPath.appendingPathComponent(blob.path)
+                let originalDir = originalURL.deletingLastPathComponent()
+                if !fileManager.fileExists(atPath: originalDir.path) {
+                    try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                }
+                try fileData.write(to: originalURL)
             } catch {
-                // Skip files that fail to download (e.g., too large)
                 print("Skipped \(blob.path): \(error)")
             }
         }
 
-        // Save metadata
-        let metadataURL = localPath.appendingPathComponent(".repo-metadata.json")
-        let metadata = RepoMetadata(
+        // Save snapshot
+        let snapshot = RepoSnapshot(
             fullName: repo.fullName,
             cloneURL: repo.cloneURL,
             defaultBranch: repo.defaultBranch,
-            lastSyncedAt: ISO8601DateFormatter().string(from: Date())
+            lastSyncedAt: ISO8601DateFormatter().string(from: Date()),
+            headCommitSHA: headCommitSHA,
+            treeSHA: treeSHA,
+            files: trackedFiles
         )
-        try JSONEncoder().encode(metadata).write(to: metadataURL)
+        try saveSnapshot(snapshot, for: localPath)
 
         progress("Done")
     }
+
+    // MARK: - Snapshot Persistence
+
+    /// Load RepoSnapshot from .repo-metadata.json, with backward compat for old RepoMetadata.
+    func loadSnapshot(for repoPath: URL) -> RepoSnapshot? {
+        let metadataURL = repoPath.appendingPathComponent(".repo-metadata.json")
+        guard let data = try? Data(contentsOf: metadataURL) else { return nil }
+
+        // Try new format first
+        if let snapshot = try? JSONDecoder().decode(RepoSnapshot.self, from: data) {
+            return snapshot
+        }
+
+        // Fallback to legacy RepoMetadata
+        if let legacy = try? JSONDecoder().decode(RepoMetadata.self, from: data) {
+            return RepoSnapshot(from: legacy)
+        }
+
+        return nil
+    }
+
+    /// Save RepoSnapshot to .repo-metadata.json.
+    func saveSnapshot(_ snapshot: RepoSnapshot, for repoPath: URL) throws {
+        let metadataURL = repoPath.appendingPathComponent(".repo-metadata.json")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(snapshot)
+        try data.write(to: metadataURL)
+    }
+
+    // MARK: - Status (Local Change Detection)
+
+    /// Detect local changes by comparing current file content hashes against the snapshot.
+    func status(at repoPath: URL) -> [FileChange] {
+        guard let snapshot = loadSnapshot(for: repoPath) else { return [] }
+
+        var changes: [FileChange] = []
+        var visitedPaths = Set<String>()
+
+        // Walk local files
+        walkFiles(at: repoPath, relativeTo: repoPath) { relativePath in
+            visitedPaths.insert(relativePath)
+
+            let fileURL = repoPath.appendingPathComponent(relativePath)
+            guard let fileData = try? Data(contentsOf: fileURL) else { return }
+            let currentHash = ContentHasher.sha256(data: fileData)
+
+            if let tracked = snapshot.files[relativePath] {
+                // File exists in snapshot - check if modified
+                if tracked.originalContentHash != currentHash {
+                    changes.append(FileChange(path: relativePath, changeType: .modified))
+                }
+            } else {
+                // File not in snapshot - it's added
+                changes.append(FileChange(path: relativePath, changeType: .added))
+            }
+        }
+
+        // Check for deleted files
+        for (path, _) in snapshot.files {
+            if !visitedPaths.contains(path) {
+                changes.append(FileChange(path: path, changeType: .deleted))
+            }
+        }
+
+        return changes.sorted { $0.path < $1.path }
+    }
+
+    /// Walk all non-hidden, non-metadata files recursively.
+    private func walkFiles(at directory: URL, relativeTo root: URL, handler: (String) -> Void) {
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return }
+
+        for url in contents {
+            let name = url.lastPathComponent
+            if name == ".repo-metadata.json" || name == originalsDir { continue }
+
+            let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+            if isDir {
+                walkFiles(at: url, relativeTo: root, handler: handler)
+            } else {
+                let relativePath = url.path.replacingOccurrences(of: root.path + "/", with: "")
+                handler(relativePath)
+            }
+        }
+    }
+
+    // MARK: - Diff
+
+    /// Compute a diff for a single file by comparing against .originals copy.
+    func diff(at repoPath: URL, for filePath: String) -> FileDiff? {
+        let currentURL = repoPath.appendingPathComponent(filePath)
+        let originalURL = repoPath.appendingPathComponent(originalsDir).appendingPathComponent(filePath)
+
+        let original = (try? String(contentsOf: originalURL, encoding: .utf8)) ?? ""
+        let modified = (try? String(contentsOf: currentURL, encoding: .utf8)) ?? ""
+
+        if original == modified { return nil }
+
+        return DiffEngine.diff(original: original, modified: modified, path: filePath)
+    }
+
+    // MARK: - Commit & Push
+
+    /// Create a commit with selected changes and push to remote via GitHub API.
+    func commitAndPush(repo: Repository, changes: [FileChange], message: String, token: String, force: Bool = false) async throws {
+        guard !changes.isEmpty else { throw GitError.noChanges }
+        guard !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw GitError.commitFailed("Commit message cannot be empty")
+        }
+
+        let localPath = repo.localPath
+        guard var snapshot = loadSnapshot(for: localPath) else {
+            throw GitError.snapshotCorrupted
+        }
+
+        let provider = GitHubProvider(token: token)
+        let components = repo.fullName.split(separator: "/")
+        let owner = String(components[0])
+        let repoName = String(components[1])
+
+        // Check for conflicts: compare remote HEAD vs local headCommitSHA
+        let remoteRef = try await provider.getRef(owner: owner, repo: repoName, branch: repo.defaultBranch)
+        if !force && remoteRef.object.sha != snapshot.headCommitSHA && !snapshot.headCommitSHA.isEmpty {
+            throw GitError.conflictDetected("Remote has new commits. Pull first.")
+        }
+
+        // Create blobs for each changed file
+        var treeEntries: [CreateTreeEntry] = []
+
+        for change in changes {
+            switch change.changeType {
+            case .modified, .added:
+                let fileURL = localPath.appendingPathComponent(change.path)
+                guard let fileData = try? Data(contentsOf: fileURL) else { continue }
+                let base64Content = fileData.base64EncodedString()
+
+                let blobResponse = try await provider.createBlob(
+                    owner: owner, repo: repoName,
+                    content: base64Content, encoding: "base64"
+                )
+
+                treeEntries.append(CreateTreeEntry(
+                    path: change.path,
+                    mode: "100644",
+                    type: "blob",
+                    sha: blobResponse.sha
+                ))
+
+            case .deleted:
+                // Setting sha to nil with the file path removes it from the tree
+                treeEntries.append(CreateTreeEntry(
+                    path: change.path,
+                    mode: "100644",
+                    type: "blob",
+                    sha: nil
+                ))
+            }
+        }
+
+        // Create new tree
+        let newTree = try await provider.createTree(
+            owner: owner, repo: repoName,
+            baseTree: snapshot.treeSHA,
+            entries: treeEntries
+        )
+
+        // Create commit
+        let newCommit = try await provider.createCommit(
+            owner: owner, repo: repoName,
+            message: message,
+            tree: newTree.sha,
+            parents: [snapshot.headCommitSHA]
+        )
+
+        // Update branch ref
+        _ = try await provider.updateRef(
+            owner: owner, repo: repoName,
+            branch: repo.defaultBranch,
+            sha: newCommit.sha,
+            force: force
+        )
+
+        // Update local snapshot
+        snapshot.headCommitSHA = newCommit.sha
+        snapshot.treeSHA = newTree.sha
+        snapshot.lastSyncedAt = ISO8601DateFormatter().string(from: Date())
+
+        // Update tracked files and .originals
+        let originalsPath = localPath.appendingPathComponent(originalsDir)
+
+        for change in changes {
+            switch change.changeType {
+            case .modified, .added:
+                let fileURL = localPath.appendingPathComponent(change.path)
+                if let fileData = try? Data(contentsOf: fileURL) {
+                    let contentHash = ContentHasher.sha256(data: fileData)
+                    let blobSHA = treeEntries.first(where: { $0.path == change.path })?.sha ?? ""
+                    snapshot.files[change.path] = TrackedFile(sha: blobSHA, originalContentHash: contentHash)
+
+                    // Update .originals
+                    let originalURL = originalsPath.appendingPathComponent(change.path)
+                    let originalDir = originalURL.deletingLastPathComponent()
+                    if !fileManager.fileExists(atPath: originalDir.path) {
+                        try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                    }
+                    try? fileData.write(to: originalURL)
+                }
+
+            case .deleted:
+                snapshot.files.removeValue(forKey: change.path)
+                let originalURL = originalsPath.appendingPathComponent(change.path)
+                try? fileManager.removeItem(at: originalURL)
+            }
+        }
+
+        try saveSnapshot(snapshot, for: localPath)
+    }
+
+    // MARK: - Pull
+
+    /// Pull remote changes into local repo.
+    func pull(repo: Repository, token: String) async throws -> PullResult {
+        let localPath = repo.localPath
+        guard var snapshot = loadSnapshot(for: localPath) else {
+            throw GitError.snapshotCorrupted
+        }
+
+        let provider = GitHubProvider(token: token)
+        let components = repo.fullName.split(separator: "/")
+        let owner = String(components[0])
+        let repoName = String(components[1])
+
+        // Fetch remote HEAD
+        let remoteRef = try await provider.getRef(owner: owner, repo: repoName, branch: repo.defaultBranch)
+        let remoteHeadSHA = remoteRef.object.sha
+
+        // If same, nothing to do
+        if remoteHeadSHA == snapshot.headCommitSHA {
+            return .upToDate
+        }
+
+        // Get remote commit and tree
+        let remoteCommit = try await provider.getCommit(owner: owner, repo: repoName, sha: remoteHeadSHA)
+        let remoteTreeSHA = remoteCommit.tree.sha
+        let remoteTree = try await provider.getTree(owner: owner, repo: repoName, treeSHA: remoteTreeSHA, recursive: true)
+
+        // Build map of remote files
+        let remoteBlobs = remoteTree.tree.filter { $0.type == "blob" }
+        var remoteFileMap: [String: String] = [:] // path -> sha
+        for blob in remoteBlobs {
+            remoteFileMap[blob.path] = blob.sha
+        }
+
+        // Check for conflicts: files changed both locally and remotely
+        let localChanges = status(at: localPath)
+        let localChangedPaths = Set(localChanges.map { $0.path })
+        var conflictFiles: [String] = []
+
+        for change in localChanges {
+            let remoteChanged = remoteFileMap[change.path] != snapshot.files[change.path]?.sha
+            if remoteChanged {
+                conflictFiles.append(change.path)
+            }
+        }
+
+        if !conflictFiles.isEmpty {
+            return .conflicts(files: conflictFiles)
+        }
+
+        // Download changed files
+        var filesChanged = 0
+        let originalsPath = localPath.appendingPathComponent(originalsDir)
+        var updatedFiles = snapshot.files
+
+        for blob in remoteBlobs {
+            let localSHA = snapshot.files[blob.path]?.sha
+            if localSHA != blob.sha {
+                // File changed on remote - download it
+                // Skip if locally modified (already checked for conflicts above)
+                if localChangedPaths.contains(blob.path) { continue }
+
+                do {
+                    let fileData = try await provider.getFileContent(
+                        owner: owner, repo: repoName,
+                        path: blob.path, ref: repo.defaultBranch
+                    )
+
+                    let fileURL = localPath.appendingPathComponent(blob.path)
+                    let fileDir = fileURL.deletingLastPathComponent()
+                    if !fileManager.fileExists(atPath: fileDir.path) {
+                        try fileManager.createDirectory(at: fileDir, withIntermediateDirectories: true)
+                    }
+                    try fileData.write(to: fileURL)
+
+                    // Update .originals
+                    let originalURL = originalsPath.appendingPathComponent(blob.path)
+                    let originalDir = originalURL.deletingLastPathComponent()
+                    if !fileManager.fileExists(atPath: originalDir.path) {
+                        try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                    }
+                    try fileData.write(to: originalURL)
+
+                    let contentHash = ContentHasher.sha256(data: fileData)
+                    updatedFiles[blob.path] = TrackedFile(sha: blob.sha, originalContentHash: contentHash)
+                    filesChanged += 1
+                } catch {
+                    print("Failed to pull \(blob.path): \(error)")
+                }
+            }
+        }
+
+        // Remove files deleted on remote
+        for (path, _) in snapshot.files {
+            if remoteFileMap[path] == nil && !localChangedPaths.contains(path) {
+                let fileURL = localPath.appendingPathComponent(path)
+                try? fileManager.removeItem(at: fileURL)
+                let originalURL = originalsPath.appendingPathComponent(path)
+                try? fileManager.removeItem(at: originalURL)
+                updatedFiles.removeValue(forKey: path)
+                filesChanged += 1
+            }
+        }
+
+        // Update snapshot
+        snapshot.headCommitSHA = remoteHeadSHA
+        snapshot.treeSHA = remoteTreeSHA
+        snapshot.files = updatedFiles
+        snapshot.lastSyncedAt = ISO8601DateFormatter().string(from: Date())
+        try saveSnapshot(snapshot, for: localPath)
+
+        return .updated(filesChanged: filesChanged)
+    }
+
+    // MARK: - Remote Status Check
+
+    /// Quick check: local changes count + remote HEAD comparison.
+    func checkRemoteStatus(repo: Repository, token: String) async -> SyncState {
+        let localPath = repo.localPath
+        guard let snapshot = loadSnapshot(for: localPath) else {
+            return .error("No snapshot found")
+        }
+
+        let localChanges = status(at: localPath)
+
+        // Check remote HEAD
+        let provider = GitHubProvider(token: token)
+        let components = repo.fullName.split(separator: "/")
+        guard components.count == 2 else { return .error("Invalid repo name") }
+        let owner = String(components[0])
+        let repoName = String(components[1])
+
+        do {
+            let remoteRef = try await provider.getRef(owner: owner, repo: repoName, branch: repo.defaultBranch)
+            let remoteHeadSHA = remoteRef.object.sha
+
+            let hasLocalChanges = !localChanges.isEmpty
+            let hasRemoteChanges = remoteHeadSHA != snapshot.headCommitSHA && !snapshot.headCommitSHA.isEmpty
+
+            if hasLocalChanges && hasRemoteChanges {
+                return .conflict
+            } else if hasLocalChanges {
+                return .localChanges(count: localChanges.count)
+            } else if hasRemoteChanges {
+                return .remoteChanges
+            } else {
+                return .upToDate
+            }
+        } catch {
+            return .error(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Existing Operations
+
+    /// Delete a cloned repo from local storage
+    func deleteLocalRepo(at path: URL) throws {
+        try fileManager.removeItem(at: path)
+    }
+
+    /// Check if repo exists locally
+    func isCloned(_ repo: Repository) -> Bool {
+        fileManager.fileExists(atPath: repo.localPath.path)
+    }
 }
 
-// MARK: - Models
+// MARK: - Models (kept for backward compatibility)
 
 struct RepoMetadata: Codable {
     let fullName: String
@@ -238,12 +523,20 @@ enum GitError: LocalizedError {
     case cloneFailed(String)
     case pushFailed(String)
     case pullFailed(String)
+    case commitFailed(String)
+    case conflictDetected(String)
+    case noChanges
+    case snapshotCorrupted
 
     var errorDescription: String? {
         switch self {
         case .cloneFailed(let msg): return "Clone failed: \(msg)"
         case .pushFailed(let msg): return "Push failed: \(msg)"
         case .pullFailed(let msg): return "Pull failed: \(msg)"
+        case .commitFailed(let msg): return "Commit failed: \(msg)"
+        case .conflictDetected(let msg): return "Conflict: \(msg)"
+        case .noChanges: return "No changes to commit"
+        case .snapshotCorrupted: return "Repository snapshot is corrupted. Try re-cloning."
         }
     }
 }

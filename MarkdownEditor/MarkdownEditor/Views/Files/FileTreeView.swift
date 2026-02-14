@@ -7,9 +7,25 @@ struct FileTreeView: View {
     @State private var recentFiles: [String] = []
     @State private var isLoading = true
     @State private var selectedFile: FileSelection?
+    @State private var syncState: SyncState = .unknown
+    @State private var changeCount = 0
+    @State private var showGitPanel = false
 
     var body: some View {
         List {
+            // Sync state header
+            Section {
+                HStack {
+                    Image(systemName: "arrow.triangle.branch")
+                        .foregroundStyle(.secondary)
+                    Text(repo.defaultBranch)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    SyncStateIndicator(state: syncState)
+                }
+            }
+
             if !recentFiles.isEmpty {
                 Section("Recent") {
                     ForEach(recentFiles, id: \.self) { path in
@@ -46,9 +62,41 @@ struct FileTreeView: View {
         }
         .navigationTitle(repo.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                Button {
+                    // New file placeholder
+                } label: {
+                    Label("New File", systemImage: "doc.badge.plus")
+                }
+
+                Spacer()
+
+                Button {
+                    showGitPanel = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.branch")
+                        Text("Git")
+                        if changeCount > 0 {
+                            Text("\(changeCount)")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(.orange)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+        }
         .task {
-            loadFileTree()
+            let changes = GitService.shared.status(at: repo.localPath)
+            loadFileTree(changes: changes)
             loadRecentFiles()
+            await loadSyncState(changes: changes)
         }
         .navigationDestination(item: $selectedFile) { selection in
             switch selection.fileType {
@@ -75,16 +123,36 @@ struct FileTreeView: View {
                 )
             }
         }
+        .navigationDestination(isPresented: $showGitPanel) {
+            GitPanelView(repo: repo)
+        }
     }
 
-    private func loadFileTree() {
-        fileTree = FileManagerService.shared.buildFileTree(at: repo.localPath)
+    private func loadFileTree(changes: [FileChange]) {
+        if changes.isEmpty {
+            fileTree = FileManagerService.shared.buildFileTree(at: repo.localPath)
+        } else {
+            fileTree = FileManagerService.shared.buildFileTree(at: repo.localPath, changes: changes)
+        }
         isLoading = false
     }
 
     private func loadRecentFiles() {
         let key = "recentFiles-\(repo.fullName)"
         recentFiles = UserDefaults.standard.stringArray(forKey: key) ?? []
+    }
+
+    private func loadSyncState(changes: [FileChange]) async {
+        syncState = .checking
+        changeCount = changes.count
+
+        if let token = appState.authService.getAccessToken() {
+            syncState = await GitService.shared.checkRemoteStatus(repo: repo, token: token)
+        } else if !changes.isEmpty {
+            syncState = .localChanges(count: changes.count)
+        } else {
+            syncState = .upToDate
+        }
     }
 
     private func openFile(path: String, fileType: FileType) {
