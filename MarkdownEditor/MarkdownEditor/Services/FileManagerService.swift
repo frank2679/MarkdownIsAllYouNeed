@@ -14,11 +14,12 @@ final class FileManagerService {
         guard let contents = try? fm.contentsOfDirectory(
             at: directoryURL,
             includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: []
         ) else {
             return []
         }
 
+        let rootPath = repoRoot.standardizedFileURL.path
         var nodes: [FileNode] = []
 
         for url in contents {
@@ -28,7 +29,14 @@ final class FileManagerService {
             if name == ".repo-metadata.json" || name == ".originals" { continue }
 
             let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-            let relativePath = url.path.replacingOccurrences(of: repoRoot.path + "/", with: "")
+            let filePath = url.standardizedFileURL.path
+            var relativePath = filePath
+            if filePath.hasPrefix(rootPath) {
+                relativePath = String(filePath.dropFirst(rootPath.count))
+                if relativePath.hasPrefix("/") {
+                    relativePath.removeFirst()
+                }
+            }
 
             if isDirectory {
                 let children = buildFileTree(at: url, repoRoot: repoRoot)

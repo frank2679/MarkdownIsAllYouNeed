@@ -144,6 +144,8 @@ struct RepoListView: View {
                     cloneProgress = status
                 }
             }
+            // Keep the final progress message visible for 3 seconds
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
             await loadRepos()
         } catch {
             errorMessage = error.localizedDescription

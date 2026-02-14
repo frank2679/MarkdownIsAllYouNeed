@@ -144,7 +144,16 @@ final class GitService {
         )
         try saveSnapshot(snapshot, for: localPath)
 
-        progress("Done")
+        // Verify files on disk
+        var existCount = 0
+        for (path, _) in trackedFiles {
+            let fileURL = localPath.appendingPathComponent(path)
+            if fileManager.fileExists(atPath: fileURL.path) {
+                existCount += 1
+            }
+        }
+        let failed = total - results.count
+        progress("Done: \(results.count)/\(total) downloaded, \(existCount) on disk, \(failed) failed")
     }
 
     // MARK: - Snapshot Persistence
@@ -216,22 +225,31 @@ final class GitService {
 
     /// Walk all non-hidden, non-metadata files recursively.
     private func walkFiles(at directory: URL, relativeTo root: URL, handler: (String) -> Void) {
+        let rootPath = root.standardizedFileURL.path
         guard let contents = try? fileManager.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: []
         ) else { return }
 
         for url in contents {
-            let name = url.lastPathComponent
+            let standardizedURL = url.standardizedFileURL
+            let name = standardizedURL.lastPathComponent
             if name == ".repo-metadata.json" || name == originalsDir { continue }
 
-            let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+            let isDir = (try? standardizedURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             if isDir {
-                walkFiles(at: url, relativeTo: root, handler: handler)
+                walkFiles(at: standardizedURL, relativeTo: root, handler: handler)
             } else {
-                let relativePath = url.path.replacingOccurrences(of: root.path + "/", with: "")
-                handler(relativePath)
+                let filePath = standardizedURL.path
+                if filePath.hasPrefix(rootPath) {
+                    var relativePath = String(filePath.dropFirst(rootPath.count))
+                    // Remove leading slash if present
+                    if relativePath.hasPrefix("/") {
+                        relativePath.removeFirst()
+                    }
+                    handler(relativePath)
+                }
             }
         }
     }

@@ -13,8 +13,24 @@ struct MarkdownEditorScreen: View {
     @State private var showSavedToast = false
     @State private var coordinatorRef: MarkdownEditorView.Coordinator?
 
+    private var fileExists: Bool {
+        FileManager.default.fileExists(atPath: fileURL.path)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            if !fileExists {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text("File not found. Try re-cloning the repository.")
+                }
+                .font(.caption)
+                .foregroundStyle(.white)
+                .padding(8)
+                .frame(maxWidth: .infinity)
+                .background(.orange)
+            }
+
             // Toolbar
             EditorToolbar { format in
                 coordinatorRef?.applyFormat(format)

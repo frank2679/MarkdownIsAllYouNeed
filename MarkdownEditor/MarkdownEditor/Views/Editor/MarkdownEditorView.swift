@@ -178,20 +178,12 @@ struct MarkdownEditorView: UIViewRepresentable {
             guard !contentLoaded else { return }
             contentLoaded = true
 
-            let fileExists = FileManager.default.fileExists(atPath: parent.fileURL.path)
-            print("[Editor] Loading file: \(parent.fileURL.path)")
-            print("[Editor] File exists: \(fileExists)")
-
             let markdown = FileManagerService.shared.readFileContent(at: parent.fileURL) ?? ""
-            print("[Editor] Content length: \(markdown.count)")
 
-            let escaped = markdown
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "'", with: "\\'")
-                .replacingOccurrences(of: "\n", with: "\\n")
-                .replacingOccurrences(of: "\r", with: "")
+            // Use JSONEncoder for safe string escaping (handles quotes, newlines, backslashes, etc.)
+            let jsonString = (try? JSONEncoder().encode(markdown)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
 
-            let js = "window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: '\(escaped)' } });"
+            let js = "window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });"
             webView?.evaluateJavaScript(js) { _, error in
                 if let error = error {
                     print("[Editor] JS evaluation error: \(error)")
