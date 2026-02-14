@@ -34,6 +34,13 @@ struct FileNodeRow: View {
 
                     Spacer()
 
+                    // Change indicator dot
+                    if let changeType = node.changeType {
+                        Circle()
+                            .fill(changeIndicatorColor(for: changeType))
+                            .frame(width: 8, height: 8)
+                    }
+
                     // Show file size for non-text files
                     if node.fileType == .image || node.fileType == .binary {
                         let size = FileManagerService.shared.fileSize(
@@ -54,6 +61,14 @@ struct FileNodeRow: View {
         case .text: return .primary
         case .image: return .green
         case .binary: return .secondary
+        }
+    }
+
+    private func changeIndicatorColor(for type: FileChangeType) -> Color {
+        switch type {
+        case .modified: return .orange
+        case .added: return .green
+        case .deleted: return .red
         }
     }
 

@@ -39,6 +39,13 @@
 		AA000030 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000030 /* index.html */; };
 		AA000031 /* editor.js in Resources */ = {isa = PBXBuildFile; fileRef = BB000031 /* editor.js */; };
 		AA000032 /* editor.css in Resources */ = {isa = PBXBuildFile; fileRef = BB000032 /* editor.css */; };
+		AA000033 /* GitStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000033 /* GitStatus.swift */; };
+		AA000034 /* GitAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000034 /* GitAPIModels.swift */; };
+		AA000035 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000035 /* DiffEngine.swift */; };
+		AA000036 /* SyncStateIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000036 /* SyncStateIndicator.swift */; };
+		AA000037 /* ChangeFileRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000037 /* ChangeFileRow.swift */; };
+		AA000038 /* DiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000038 /* DiffView.swift */; };
+		AA000039 /* GitPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000039 /* GitPanelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +81,13 @@
 		BB000030 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		BB000031 /* editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = editor.js; sourceTree = "<group>"; };
 		BB000032 /* editor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = editor.css; sourceTree = "<group>"; };
+		BB000033 /* GitStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitStatus.swift; sourceTree = "<group>"; };
+		BB000034 /* GitAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitAPIModels.swift; sourceTree = "<group>"; };
+		BB000035 /* DiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngine.swift; sourceTree = "<group>"; };
+		BB000036 /* SyncStateIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStateIndicator.swift; sourceTree = "<group>"; };
+		BB000037 /* ChangeFileRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeFileRow.swift; sourceTree = "<group>"; };
+		BB000038 /* DiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffView.swift; sourceTree = "<group>"; };
+		BB000039 /* GitPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitPanelView.swift; sourceTree = "<group>"; };
 		CC000001 /* MarkdownEditor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarkdownEditor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -126,6 +140,7 @@
 				EE000011 /* Repos */,
 				EE000014 /* Files */,
 				EE000015 /* Editor */,
+				EE000017 /* Git */,
 				EE000012 /* Chat */,
 				EE000013 /* Settings */,
 			);
@@ -150,6 +165,8 @@
 				BB000011 /* UserProfile.swift */,
 				BB000012 /* Repository.swift */,
 				BB000018 /* FileNode.swift */,
+				BB000033 /* GitStatus.swift */,
+				BB000034 /* GitAPIModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -160,6 +177,7 @@
 				BB000009 /* KeychainHelper.swift */,
 				BB000010 /* Constants.swift */,
 				BB000019 /* FileTypeDetector.swift */,
+				BB000035 /* DiffEngine.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -237,6 +255,17 @@
 				BB000032 /* editor.css */,
 			);
 			path = WebView;
+			sourceTree = "<group>";
+		};
+		EE000017 /* Git */ = {
+			isa = PBXGroup;
+			children = (
+				BB000036 /* SyncStateIndicator.swift */,
+				BB000037 /* ChangeFileRow.swift */,
+				BB000038 /* DiffView.swift */,
+				BB000039 /* GitPanelView.swift */,
+			);
+			path = Git;
 			sourceTree = "<group>";
 		};
 		EE000099 /* Products */ = {
@@ -347,6 +376,13 @@
 				AA000027 /* MarkdownEditorView.swift in Sources */,
 				AA000028 /* EditorToolbar.swift in Sources */,
 				AA000029 /* MarkdownEditorScreen.swift in Sources */,
+				AA000033 /* GitStatus.swift in Sources */,
+				AA000034 /* GitAPIModels.swift in Sources */,
+				AA000035 /* DiffEngine.swift in Sources */,
+				AA000036 /* SyncStateIndicator.swift in Sources */,
+				AA000037 /* ChangeFileRow.swift in Sources */,
+				AA000038 /* DiffView.swift in Sources */,
+				AA000039 /* GitPanelView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,7 +526,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.frankyoung2679.MarkdownEditor;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -518,7 +554,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.frankyoung2679.MarkdownEditor;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
