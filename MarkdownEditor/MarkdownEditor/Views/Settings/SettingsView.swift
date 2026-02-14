@@ -63,13 +63,12 @@ struct SettingsView: View {
             }
 
             Section("About") {
-                HStack {
-                    Text("Version")
-                    Spacer()
-                    Text("1.0.0")
-                        .foregroundStyle(.secondary)
-                }
-            }
+                                    HStack {
+                                        Text("Version")
+                                        Spacer()
+                                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.0")
+                                            .foregroundStyle(.secondary)
+                                    }            }
         }
         .navigationTitle("Settings")
     }
