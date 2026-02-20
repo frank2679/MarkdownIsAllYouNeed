@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install xcpretty
+        run: gem install xcpretty --no-document
+
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project MarkdownEditor/MarkdownEditor.xcodeproj \
+            -scheme MarkdownEditor \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' \
+            -resultBundlePath TestResults.xcresult \
+            2>&1 | xcpretty --color --report junit --output test-results.xml
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults.xcresult
+            test-results.xml
