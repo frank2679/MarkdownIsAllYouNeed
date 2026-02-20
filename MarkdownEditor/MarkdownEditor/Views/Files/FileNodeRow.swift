@@ -1,23 +1,87 @@
 import SwiftUI
 
+enum FileAction {
+    case createFile(inDirectory: URL)
+    case createDirectory(inDirectory: URL)
+    case rename(node: FileNode, url: URL)
+    case delete(node: FileNode, url: URL)
+    case move(sourcePath: String, toDirectory: URL)
+}
+
 struct FileNodeRow: View {
     let node: FileNode
     let repoPath: URL
     let onSelect: (String, FileType) -> Void
+    var onAction: ((FileAction) -> Void)? = nil
 
     @State private var isExpanded = false
+    @State private var isDropTargeted = false
+
+    private var nodeURL: URL {
+        repoPath.appendingPathComponent(node.path)
+    }
 
     var body: some View {
         if node.isDirectory {
             DisclosureGroup(isExpanded: $isExpanded) {
                 if let children = node.children {
                     ForEach(children) { child in
-                        FileNodeRow(node: child, repoPath: repoPath, onSelect: onSelect)
+                        FileNodeRow(
+                            node: child,
+                            repoPath: repoPath,
+                            onSelect: onSelect,
+                            onAction: onAction
+                        )
                     }
                 }
             } label: {
-                Label(node.name, systemImage: isExpanded ? "folder.fill" : "folder")
-                    .foregroundStyle(.primary)
+                // Context menu lives on the label so it targets THIS row,
+                // not a parent DisclosureGroup when nested in a List.
+                HStack {
+                    Label(node.name, systemImage: isExpanded ? "folder.fill" : "folder")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.vertical, 2)
+                .background(
+                    isDropTargeted
+                        ? RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.12))
+                        : nil
+                )
+                .contentShape(Rectangle())
+                .contextMenu {
+                    Button {
+                        onAction?(.createFile(inDirectory: nodeURL))
+                    } label: {
+                        Label("New File", systemImage: "doc.badge.plus")
+                    }
+                    Button {
+                        onAction?(.createDirectory(inDirectory: nodeURL))
+                    } label: {
+                        Label("New Folder", systemImage: "folder.badge.plus")
+                    }
+                    Divider()
+                    Button {
+                        onAction?(.rename(node: node, url: nodeURL))
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) {
+                        onAction?(.delete(node: node, url: nodeURL))
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .draggable(node.path)
+                .dropDestination(for: String.self) { items, _ in
+                    guard let sourcePath = items.first,
+                          sourcePath != node.path,
+                          !node.path.hasPrefix(sourcePath + "/") else { return false }
+                    onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
+                    return true
+                } isTargeted: { targeted in
+                    isDropTargeted = targeted
+                }
             }
         } else {
             Button {
@@ -34,24 +98,34 @@ struct FileNodeRow: View {
 
                     Spacer()
 
-                    // Change indicator dot
                     if let changeType = node.changeType {
                         Circle()
                             .fill(changeIndicatorColor(for: changeType))
                             .frame(width: 8, height: 8)
                     }
 
-                    // Show file size for non-text files
                     if node.fileType == .image || node.fileType == .binary {
-                        let size = FileManagerService.shared.fileSize(
+                        Text(formatSize(FileManagerService.shared.fileSize(
                             at: repoPath.appendingPathComponent(node.path)
-                        )
-                        Text(formatSize(size))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        )))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
+            .contextMenu {
+                Button {
+                    onAction?(.rename(node: node, url: nodeURL))
+                } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+                Button(role: .destructive) {
+                    onAction?(.delete(node: node, url: nodeURL))
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .draggable(node.path)
         }
     }
 
