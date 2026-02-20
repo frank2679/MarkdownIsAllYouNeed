@@ -113,6 +113,11 @@ final class FileManagerService {
         try fm.removeItem(at: url)
     }
 
+    /// Move a file or directory to a new location
+    func move(from sourceURL: URL, to destinationURL: URL) throws {
+        try fm.moveItem(at: sourceURL, to: destinationURL)
+    }
+
     /// Rename a file or directory
     func rename(at url: URL, to newName: String) throws -> URL {
         let newURL = url.deletingLastPathComponent().appendingPathComponent(newName)

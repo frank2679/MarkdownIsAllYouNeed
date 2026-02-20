@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create stub xcconfig
+        run: |
+          mkdir -p Config
+          printf 'GITHUB_CLIENT_ID = CI_PLACEHOLDER\nGITHUB_CLIENT_SECRET = CI_PLACEHOLDER\n' > Config/Debug.xcconfig
+
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project MarkdownEditor/MarkdownEditor.xcodeproj \
+            -scheme MarkdownEditor \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults.xcresult

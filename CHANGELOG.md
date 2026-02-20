@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-20
+
+### Added
+- Unit test target `MarkdownEditorTests` with 47 test cases covering `DiffEngine`, `FileTypeDetector`, and `FileManagerService`.
+- New File / New Folder: tap the `+` menu in the file browser toolbar to create a file or folder at the repository root. Files without an extension automatically get `.md`.
+- Subdirectory creation: long-press any folder in the file tree to open a context menu with "New File" and "New Folder" options scoped to that directory.
+- Rename: long-press any file or folder → "Rename" → enter the new name in an alert.
+- Delete: long-press any file or folder → "Delete" → confirm in a dialog.
+- Newly created Markdown or text files are immediately opened in the editor.
+
+### Fixed
+- New file/folder creation now correctly targets the selected subdirectory. Previously, all items were created in the repository root due to a SwiftUI state-capture timing issue with `.sheet(isPresented:)`. Switched to `.sheet(item:)` with an `Identifiable` context struct so the target directory is immutably baked into the sheet at trigger time.
+
 ## [0.2.0] - 2026-02-15
 
 ### Added
