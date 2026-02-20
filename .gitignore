@@ -27,3 +27,7 @@ Pods/
 *.env
 credentials.json
 Config/Debug.xcconfig
+
+# Scheduled task runtime files
+prompt/*.log
+prompt/*.pid
