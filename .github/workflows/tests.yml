@@ -15,27 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app
-
-      - name: Install xcpretty
-        run: gem install xcpretty --no-document
+      - name: Show Xcode and simulators
+        run: |
+          xcode-select -p
+          xcrun xctrace list devices 2>&1 | grep -E "iPhone.*Simulator" | head -10
 
       - name: Run Tests
         run: |
           xcodebuild test \
             -project MarkdownEditor/MarkdownEditor.xcodeproj \
             -scheme MarkdownEditor \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -resultBundlePath TestResults.xcresult \
-            2>&1 | xcpretty --color --report junit --output test-results.xml
-          exit ${PIPESTATUS[0]}
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            TestResults.xcresult
-            test-results.xml
+          path: TestResults.xcresult
