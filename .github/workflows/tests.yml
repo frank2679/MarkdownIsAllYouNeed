@@ -15,10 +15,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show Xcode and simulators
+      - name: Create stub xcconfig
         run: |
-          xcode-select -p
-          xcrun xctrace list devices 2>&1 | grep -E "iPhone.*Simulator" | head -10
+          mkdir -p Config
+          printf 'GITHUB_CLIENT_ID = CI_PLACEHOLDER\nGITHUB_CLIENT_SECRET = CI_PLACEHOLDER\n' > Config/Debug.xcconfig
 
       - name: Run Tests
         run: |
