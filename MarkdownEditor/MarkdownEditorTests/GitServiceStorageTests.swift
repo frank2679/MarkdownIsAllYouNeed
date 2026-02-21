@@ -214,6 +214,90 @@ final class GitServiceStorageTests: XCTestCase {
                        "saveSnapshot() must not create .originals as a side effect")
     }
 
+    // MARK: - discardChanges()
+
+    func testDiscardChanges_addedFile_deletesLocalFile() async throws {
+        // Arrange: create a local-only "added" file (no snapshot entry)
+        let addedContent = "# New file\nThis was added locally.\n"
+        try writeFile(addedContent, path: "new-note.md")
+        try makeSnapshot(files: [:]) // file not tracked → "added"
+
+        let change = FileChange(path: "new-note.md", changeType: .added)
+        // A dummy repository pointing to our tempDir
+        let repo = makeTestRepo()
+
+        // Act
+        try await sut.discardChanges(change: change, repo: repo, token: "dummy-token")
+
+        // Assert: local file should be gone
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("new-note.md").path),
+            "Discarding an added file must delete it from disk")
+    }
+
+    func testDiscardChanges_modifiedFile_withCachedOriginal_restoresContent() async throws {
+        // Arrange: write modified content to working file
+        try writeFile("# Modified content\n", path: "notes.md")
+
+        // Write original content to .originals cache
+        let originalContent = "# Original content\n"
+        let originalCacheURL = tempDir.appendingPathComponent(".originals/notes.md")
+        try FileManager.default.createDirectory(
+            at: originalCacheURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try originalContent.write(to: originalCacheURL, atomically: true, encoding: .utf8)
+
+        let originalHash = ContentHasher.sha256(originalContent)
+        try makeSnapshot(files: ["notes.md": TrackedFile(sha: "blobsha", originalContentHash: originalHash)])
+
+        let change = FileChange(path: "notes.md", changeType: .modified)
+        let repo = makeTestRepo()
+
+        // Act
+        try await sut.discardChanges(change: change, repo: repo, token: "dummy-token")
+
+        // Assert: file content should match original
+        let restoredContent = try String(contentsOf: tempDir.appendingPathComponent("notes.md"), encoding: .utf8)
+        XCTAssertEqual(restoredContent, originalContent,
+                       "Discarding a modified file must restore it from .originals cache")
+    }
+
+    func testDiscardChanges_modifiedFile_withoutSnapshotThrows() async throws {
+        // Arrange: modified file, but NO snapshot at all
+        try writeFile("# Modified\n", path: "notes.md")
+        // No snapshot saved — discardChanges should throw snapshotCorrupted
+
+        let change = FileChange(path: "notes.md", changeType: .modified)
+        let repo = makeTestRepo()
+
+        do {
+            try await sut.discardChanges(change: change, repo: repo, token: "dummy-token")
+            XCTFail("Expected discardChanges to throw when snapshot is missing")
+        } catch GitError.snapshotCorrupted {
+            // Expected
+        } catch {
+            XCTFail("Expected GitError.snapshotCorrupted but got: \(error)")
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func makeTestRepo() -> Repository {
+        Repository(
+            id: 1,
+            name: "repo",
+            fullName: "owner/repo",
+            owner: Repository.Owner(login: "owner", avatarURL: ""),
+            isPrivate: false,
+            description: nil,
+            cloneURL: "https://github.com/owner/repo.git",
+            defaultBranch: "main",
+            stargazersCount: 0,
+            updatedAt: "",
+            fork: false,
+            customLocalPath: tempDir
+        )
+    }
+
     func testSaveAndLoadSnapshot_roundtrip() throws {
         let files: [String: TrackedFile] = [
             "README.md": TrackedFile(sha: "blobsha1", originalContentHash: "hash1"),
