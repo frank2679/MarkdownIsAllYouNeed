@@ -49,10 +49,6 @@ final class GitService {
             try fileManager.createDirectory(at: dirURL, withIntermediateDirectories: true)
         }
 
-        // Create .originals directory
-        let originalsPath = localPath.appendingPathComponent(originalsDir)
-        try fileManager.createDirectory(at: originalsPath, withIntermediateDirectories: true)
-
         // Download blobs (files) concurrently
         let blobs = tree.tree.filter { $0.type == "blob" }
         let total = blobs.count
@@ -88,15 +84,6 @@ final class GitService {
 
                         // Compute content hash for tracking
                         let contentHash = ContentHasher.sha256(data: fileData)
-
-                        // Copy to .originals for offline diff
-                        let originalsBase = localPath.appendingPathComponent(".originals")
-                        let originalURL = originalsBase.appendingPathComponent(blobPath)
-                        let originalDir = originalURL.deletingLastPathComponent()
-                        if !FileManager.default.fileExists(atPath: originalDir.path) {
-                            try FileManager.default.createDirectory(at: originalDir, withIntermediateDirectories: true)
-                        }
-                        try fileData.write(to: originalURL)
 
                         return (blobPath, capturedSHA, contentHash)
                     } catch {
@@ -257,9 +244,13 @@ final class GitService {
     // MARK: - Diff
 
     /// Compute a diff for a single file by comparing against .originals copy.
+    /// Returns nil if the original is not cached locally (use diffAsync to fetch on-demand).
     func diff(at repoPath: URL, for filePath: String) -> FileDiff? {
         let currentURL = repoPath.appendingPathComponent(filePath)
         let originalURL = repoPath.appendingPathComponent(originalsDir).appendingPathComponent(filePath)
+
+        // Original not cached locally — cannot compute diff synchronously.
+        guard fileManager.fileExists(atPath: originalURL.path) else { return nil }
 
         let original = (try? String(contentsOf: originalURL, encoding: .utf8)) ?? ""
         let modified = (try? String(contentsOf: currentURL, encoding: .utf8)) ?? ""
@@ -267,6 +258,51 @@ final class GitService {
         if original == modified { return nil }
 
         return DiffEngine.diff(original: original, modified: modified, path: filePath)
+    }
+
+    /// Async variant: fetches the original content from GitHub if not cached locally,
+    /// caches it in .originals, then returns the diff. Returns nil if unfetchable.
+    func diffAsync(path: String, repo: Repository, token: String) async -> FileDiff? {
+        let repoPath = repo.localPath
+        let originalURL = repoPath.appendingPathComponent(originalsDir).appendingPathComponent(path)
+
+        // Fast path: original already cached
+        if fileManager.fileExists(atPath: originalURL.path) {
+            return diff(at: repoPath, for: path)
+        }
+
+        // Slow path: fetch original from GitHub at the commit SHA recorded at clone time
+        guard let snapshot = loadSnapshot(for: repoPath),
+              snapshot.files[path] != nil else { return nil }
+
+        let parts = repo.fullName.split(separator: "/")
+        guard parts.count == 2 else { return nil }
+        let owner = String(parts[0])
+        let repoName = String(parts[1])
+
+        let provider = GitHubProvider(token: token)
+        do {
+            let originalData = try await provider.getFileContent(
+                owner: owner, repo: repoName,
+                path: path, ref: snapshot.headCommitSHA
+            )
+
+            // Cache in .originals for subsequent calls
+            let originalsBase = repoPath.appendingPathComponent(originalsDir)
+            if !fileManager.fileExists(atPath: originalsBase.path) {
+                try fileManager.createDirectory(at: originalsBase, withIntermediateDirectories: true)
+            }
+            let originalDir = originalURL.deletingLastPathComponent()
+            if !fileManager.fileExists(atPath: originalDir.path) {
+                try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+            }
+            try originalData.write(to: originalURL)
+
+            return diff(at: repoPath, for: path)
+        } catch {
+            print("[GitService] Failed to fetch original for diff (\(path)): \(error)")
+            return nil
+        }
     }
 
     // MARK: - Commit & Push
@@ -355,7 +391,7 @@ final class GitService {
         snapshot.treeSHA = newTree.sha
         snapshot.lastSyncedAt = ISO8601DateFormatter().string(from: Date())
 
-        // Update tracked files and .originals
+        // Update tracked files; evict .originals cache entries for committed files
         let originalsPath = localPath.appendingPathComponent(originalsDir)
 
         for change in changes {
@@ -367,13 +403,10 @@ final class GitService {
                     let blobSHA = treeEntries.first(where: { $0.path == change.path })?.sha ?? ""
                     snapshot.files[change.path] = TrackedFile(sha: blobSHA, originalContentHash: contentHash)
 
-                    // Update .originals
+                    // Evict .originals cache — committed content becomes the new baseline,
+                    // so the next diff will fetch fresh from GitHub.
                     let originalURL = originalsPath.appendingPathComponent(change.path)
-                    let originalDir = originalURL.deletingLastPathComponent()
-                    if !fileManager.fileExists(atPath: originalDir.path) {
-                        try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
-                    }
-                    try? fileData.write(to: originalURL)
+                    try? fileManager.removeItem(at: originalURL)
                 }
 
             case .deleted:
@@ -462,13 +495,9 @@ final class GitService {
                     }
                     try fileData.write(to: fileURL)
 
-                    // Update .originals
+                    // Evict stale .originals cache so next diff fetch is fresh
                     let originalURL = originalsPath.appendingPathComponent(blob.path)
-                    let originalDir = originalURL.deletingLastPathComponent()
-                    if !fileManager.fileExists(atPath: originalDir.path) {
-                        try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
-                    }
-                    try fileData.write(to: originalURL)
+                    try? fileManager.removeItem(at: originalURL)
 
                     let contentHash = ContentHasher.sha256(data: fileData)
                     updatedFiles[blob.path] = TrackedFile(sha: blob.sha, originalContentHash: contentHash)
