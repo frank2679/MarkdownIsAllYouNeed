@@ -6,9 +6,9 @@
 
 WORKDIR="/Users/hang/work/MarkdownIsAllYouNeed"
 PID_FILE="$WORKDIR/prompt/scheduled-dev.pid"
-DELAY=3600  # 1 小时（秒）
+DELAY=0  # 立即执行（定时使用改为 3600）
 
-echo $$ > "$PID_FILE"
+echo $$ >"$PID_FILE"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 任务已注册，将在 1 小时后（$(date -v+1H '+%H:%M:%S')）开始执行"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 取消方式：kill \$(cat $PID_FILE)"
 
@@ -22,7 +22,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] 启动 claude（日志实时输出）..."
 
 # 写 prompt 到临时文件（避免 shell 转义问题）
 PROMPT_FILE="/tmp/claude-dev-prompt.txt"
-cat > "$PROMPT_FILE" << 'PROMPT_EOF'
+cat >"$PROMPT_FILE" <<'PROMPT_EOF'
 开始 v0.5.0 开发工作。
 
 ## 项目上下文
@@ -55,11 +55,11 @@ Bug fix（优先处理）：
 9. 创建 PR（base: main），PR body 包含变更摘要、文件清单、测试计划 checklist
 PROMPT_EOF
 
-# 用 Python pty 模块启动 claude，解决后台进程无 TTY 导致 SIGTTIN 挂起的问题
-# pty.spawn 为 claude 分配伪终端，同时将所有输出透传到当前 stdout（即日志文件）
+# pty.spawn 内部会 select stdin，/dev/null 立刻返回 EOF 导致 copy 循环退出。
+# 改用 pty.fork 手动控制：只读 master PTY（claude 输出），不碰 stdin。
 unset CLAUDECODE
-python3 - "$PROMPT_FILE" << 'PYEOF'
-import pty, os, sys, re
+python3 - "$PROMPT_FILE" <<'PYEOF'
+import pty, os, sys, re, select
 
 prompt_file = sys.argv[1]
 claude_bin = os.path.expanduser('~/.local/bin/claude')
@@ -68,15 +68,29 @@ ansi_escape = re.compile(rb'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 with open(prompt_file) as f:
     prompt = f.read().strip()
 
-def read(fd):
-    data = os.read(fd, 4096)
-    # 去除 ANSI 转义码，保持日志可读
-    clean = ansi_escape.sub(b'', data)
-    os.write(sys.stdout.fileno(), clean)
-    sys.stdout.flush()
-    return data
+pid, master_fd = pty.fork()
 
-pty.spawn([claude_bin, '--dangerously-skip-permissions', '-p', prompt], read)
+if pid == 0:  # 子进程：exec claude
+    os.execvp(claude_bin, [claude_bin, '--dangerously-skip-permissions', '-p', prompt])
+else:  # 父进程：读 PTY 输出，写到 stdout（日志文件）
+    try:
+        while True:
+            try:
+                rfds, _, _ = select.select([master_fd], [], [], 5.0)
+            except (OSError, ValueError):
+                break
+            if master_fd in rfds:
+                try:
+                    data = os.read(master_fd, 4096)
+                except OSError:
+                    break
+                if not data:
+                    break
+                clean = ansi_escape.sub(b'', data)
+                sys.stdout.buffer.write(clean)
+                sys.stdout.buffer.flush()
+    finally:
+        os.waitpid(pid, 0)
 PYEOF
 
 EXIT_CODE=$?
