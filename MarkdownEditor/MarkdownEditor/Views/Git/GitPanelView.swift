@@ -17,6 +17,8 @@ struct GitPanelView: View {
     @State private var showConflictAlert = false
     @State private var conflictMessage = ""
     @State private var selectedDiff: DiffNavigation?
+    @State private var discardTarget: FileChange?
+    @State private var showDiscardConfirm = false
 
     var body: some View {
         List {
@@ -125,6 +127,14 @@ struct GitPanelView: View {
                                 }
                             }
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                discardTarget = change
+                                showDiscardConfirm = true
+                            } label: {
+                                Label("Discard", systemImage: "arrow.uturn.backward")
+                            }
+                        }
                     }
                 }
             } header: {
@@ -187,6 +197,22 @@ struct GitPanelView: View {
         }
         .navigationDestination(item: $selectedDiff) { nav in
             DiffView(fileDiff: nav.diff, fileName: nav.fileName)
+        }
+        .confirmationDialog(
+            "Discard Changes",
+            isPresented: $showDiscardConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Discard", role: .destructive) {
+                if let change = discardTarget {
+                    Task { await performDiscard(change: change) }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let change = discardTarget {
+                Text("Discard changes to \"\((change.path as NSString).lastPathComponent)\"? This cannot be undone.")
+            }
         }
     }
 
@@ -306,6 +332,20 @@ struct GitPanelView: View {
             showError(error.localizedDescription)
         }
         isPushing = false
+    }
+
+    private func performDiscard(change: FileChange) async {
+        guard let token = appState.authService.getAccessToken() else {
+            showError("Not authenticated")
+            return
+        }
+
+        do {
+            try await GitService.shared.discardChanges(change: change, repo: repo, token: token)
+            await refreshStatus()
+        } catch {
+            showError(error.localizedDescription)
+        }
     }
 
     private func showInfo(_ message: String) {

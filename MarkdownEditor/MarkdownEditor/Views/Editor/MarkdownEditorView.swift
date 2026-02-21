@@ -7,6 +7,7 @@ struct MarkdownEditorView: UIViewRepresentable {
     @Binding var isDirty: Bool
     var onContentChanged: ((String) -> Void)?
     var onCoordinatorReady: ((Coordinator) -> Void)?
+    var onModeChangeRequested: ((String) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -165,6 +166,21 @@ struct MarkdownEditorView: UIViewRepresentable {
                     self.parent.onContentChanged?(markdown)
                 }
 
+            case "linkClicked":
+                if let urlString = payload["url"] as? String,
+                   let url = URL(string: urlString) {
+                    DispatchQueue.main.async {
+                        UIApplication.shared.open(url)
+                    }
+                }
+
+            case "modeChangeRequested":
+                if let mode = payload["mode"] as? String {
+                    DispatchQueue.main.async {
+                        self.parent.onModeChangeRequested?(mode)
+                    }
+                }
+
             default:
                 break
             }
@@ -205,6 +221,11 @@ struct MarkdownEditorView: UIViewRepresentable {
 
         func insertImage(path: String, alt: String) {
             let js = "window.bridge.receive({ action: 'insertImage', version: 1, payload: { path: '\(path)', alt: '\(alt)' } });"
+            webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+
+        func setMode(_ mode: String) {
+            let js = "window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: '\(mode)' } });"
             webView?.evaluateJavaScript(js, completionHandler: nil)
         }
     }

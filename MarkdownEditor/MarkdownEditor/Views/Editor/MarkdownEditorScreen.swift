@@ -12,6 +12,7 @@ struct MarkdownEditorScreen: View {
     @State private var isSaving = false
     @State private var showSavedToast = false
     @State private var coordinatorRef: MarkdownEditorView.Coordinator?
+    @State private var isEditMode = false
 
     private var fileExists: Bool {
         FileManager.default.fileExists(atPath: fileURL.path)
@@ -31,9 +32,11 @@ struct MarkdownEditorScreen: View {
                 .background(.orange)
             }
 
-            // Toolbar
-            EditorToolbar { format in
-                coordinatorRef?.applyFormat(format)
+            // Toolbar — only visible in edit mode
+            if isEditMode {
+                EditorToolbar { format in
+                    coordinatorRef?.applyFormat(format)
+                }
             }
 
             // WYSIWYG Editor
@@ -46,6 +49,11 @@ struct MarkdownEditorScreen: View {
                 },
                 onCoordinatorReady: { coordinator in
                     coordinatorRef = coordinator
+                    // Start in preview mode
+                    coordinator.setMode("preview")
+                },
+                onModeChangeRequested: { mode in
+                    switchMode(to: mode)
                 }
             )
         }
@@ -53,17 +61,12 @@ struct MarkdownEditorScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    saveFile()
-                } label: {
-                    if isSaving {
-                        ProgressView()
-                    } else {
-                        Text("Save")
-                            .foregroundStyle(isDirty ? .blue : .secondary)
+                if isEditMode {
+                    Button("Done") {
+                        switchMode(to: "preview")
                     }
+                    .fontWeight(.semibold)
                 }
-                .disabled(!isDirty || isSaving)
             }
         }
         .overlay(alignment: .bottom) {
@@ -78,23 +81,45 @@ struct MarkdownEditorScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .onDisappear {
+            // Auto-save when navigating away from the editor
+            if isDirty {
+                saveFile(showToast: false)
+            }
+        }
     }
 
-    private func saveFile() {
-        guard !currentMarkdown.isEmpty else { return }
+    private func switchMode(to mode: String) {
+        if mode == "preview" && isEditMode && isDirty {
+            saveFile(showToast: true)
+        }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isEditMode = (mode == "edit")
+        }
+        coordinatorRef?.setMode(mode)
+    }
+
+    private func saveFile(showToast: Bool) {
+        guard !currentMarkdown.isEmpty || isDirty else { return }
         isSaving = true
 
+        let contentToSave = currentMarkdown.isEmpty
+            ? (FileManagerService.shared.readFileContent(at: fileURL) ?? "")
+            : currentMarkdown
+
         do {
-            try FileManagerService.shared.writeFileContent(currentMarkdown, to: fileURL)
+            try FileManagerService.shared.writeFileContent(contentToSave, to: fileURL)
             isDirty = false
             appState.saveLastEditedFile(fileURL.path)
 
-            withAnimation {
-                showSavedToast = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            if showToast {
                 withAnimation {
-                    showSavedToast = false
+                    showSavedToast = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation {
+                        showSavedToast = false
+                    }
                 }
             }
         } catch {
