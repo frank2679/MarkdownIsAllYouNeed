@@ -84,15 +84,17 @@ struct FileNodeRow: View {
                     }
                 }
                 .draggable(node.path)
-                .dropDestination(for: String.self) { items, _ in
-                    guard let sourcePath = items.first,
-                          sourcePath != node.path,
-                          !node.path.hasPrefix(sourcePath + "/") else { return false }
-                    onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
-                    return true
-                } isTargeted: { targeted in
-                    isDropTargeted = targeted
-                }
+            }
+            // dropDestination on DisclosureGroup (not just the label) so the full
+            // row area registers drops, avoiding gesture conflicts with List rows.
+            .dropDestination(for: String.self) { items, _ in
+                guard let sourcePath = items.first,
+                      sourcePath != node.path,
+                      !node.path.hasPrefix(sourcePath + "/") else { return false }
+                onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
+                return true
+            } isTargeted: { targeted in
+                isDropTargeted = targeted
             }
         } else {
             Button {

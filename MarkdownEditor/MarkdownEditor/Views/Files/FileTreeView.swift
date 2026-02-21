@@ -56,19 +56,31 @@ struct FileTreeView: View {
             if !favorites.isEmpty {
                 Section("Favorites") {
                     ForEach(favorites, id: \.self) { path in
-                        let name = (path as NSString).lastPathComponent
-                        let fileType = FileTypeDetector.detect(filename: name)
-                        Button {
-                            openFile(path: path, fileType: fileType)
-                        } label: {
-                            Label(name, systemImage: fileType.iconName)
-                                .foregroundStyle(.primary)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                toggleFavorite(path: path)
+                        if let node = findNode(path: path, in: fileTree) {
+                            // Directory favorite: render as full expandable FileNodeRow
+                            FileNodeRow(
+                                node: node,
+                                repoPath: repo.localPath,
+                                onSelect: { p, ft in openFile(path: p, fileType: ft) },
+                                onAction: { action in handleFileAction(action) },
+                                isFavorite: true
+                            )
+                        } else {
+                            // File favorite (or node not yet loaded): simple button
+                            let name = (path as NSString).lastPathComponent
+                            let fileType = FileTypeDetector.detect(filename: name)
+                            Button {
+                                openFile(path: path, fileType: fileType)
                             } label: {
-                                Label("Remove", systemImage: "star.slash")
+                                Label(name, systemImage: fileType.iconName)
+                                    .foregroundStyle(.primary)
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    toggleFavorite(path: path)
+                                } label: {
+                                    Label("Remove", systemImage: "star.slash")
+                                }
                             }
                         }
                     }
@@ -311,6 +323,16 @@ struct FileTreeView: View {
     private func loadRecentFiles() {
         let key = "recentFiles-\(repo.fullName)"
         recentFiles = UserDefaults.standard.stringArray(forKey: key) ?? []
+    }
+
+    private func findNode(path: String, in nodes: [FileNode]) -> FileNode? {
+        for node in nodes {
+            if node.path == path { return node }
+            if node.isDirectory, let children = node.children {
+                if let found = findNode(path: path, in: children) { return found }
+            }
+        }
+        return nil
     }
 
     private func loadFavorites() {
