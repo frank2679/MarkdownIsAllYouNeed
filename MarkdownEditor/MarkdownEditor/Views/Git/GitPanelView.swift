@@ -113,11 +113,16 @@ struct GitPanelView: View {
 
                     ForEach($changes) { $change in
                         ChangeFileRow(change: $change) {
-                            if let diff = GitService.shared.diff(at: repo.localPath, for: change.path) {
-                                selectedDiff = DiffNavigation(
-                                    fileName: (change.path as NSString).lastPathComponent,
-                                    diff: diff
-                                )
+                            guard let token = appState.authService.getAccessToken() else { return }
+                            Task {
+                                if let diff = await GitService.shared.diffAsync(
+                                    path: change.path, repo: repo, token: token
+                                ) {
+                                    selectedDiff = DiffNavigation(
+                                        fileName: (change.path as NSString).lastPathComponent,
+                                        diff: diff
+                                    )
+                                }
                             }
                         }
                     }

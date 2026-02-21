@@ -49,6 +49,7 @@
 		AA000101 /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000101 /* DiffEngineTests.swift */; };
 		AA000102 /* FileTypeDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000102 /* FileTypeDetectorTests.swift */; };
 		AA000103 /* FileManagerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000103 /* FileManagerServiceTests.swift */; };
+		AA000104 /* GitServiceStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000104 /* GitServiceStorageTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,6 +108,7 @@
 		BB000101 /* DiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngineTests.swift; sourceTree = "<group>"; };
 		BB000102 /* FileTypeDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTypeDetectorTests.swift; sourceTree = "<group>"; };
 		BB000103 /* FileManagerServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerServiceTests.swift; sourceTree = "<group>"; };
+		BB000104 /* GitServiceStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitServiceStorageTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -310,6 +312,7 @@
 				BB000101 /* DiffEngineTests.swift */,
 				BB000102 /* FileTypeDetectorTests.swift */,
 				BB000103 /* FileManagerServiceTests.swift */,
+				BB000104 /* GitServiceStorageTests.swift */,
 			);
 			path = MarkdownEditorTests;
 			sourceTree = "<group>";
@@ -461,6 +464,7 @@
 				AA000101 /* DiffEngineTests.swift in Sources */,
 				AA000102 /* FileTypeDetectorTests.swift in Sources */,
 				AA000103 /* FileManagerServiceTests.swift in Sources */,
+				AA000104 /* GitServiceStorageTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -612,7 +616,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -641,7 +645,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

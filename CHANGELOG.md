@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-21
+
+### Fixed
+- Markdown links now navigable (tapping links in preview mode opens them)
+- Drag-and-drop file/folder now correctly moves items to target path
+- Mobile editing no longer inserts extra blank lines or removes trailing newline
+
+### Added
+- Notion-style editing UX: tap document to preview, tap specific position to edit; formatting toolbar appears above keyboard; auto-save on exit; Save button removed
+- Favorite: pin files and folders for quick access
+- Git panel: Discard Changes button to revert local modifications
+
+## [0.4.0] - 2026-02-21
+
+### Fixed
+- Eliminated ~50% redundant disk usage: `.originals/` directory is no longer written during clone or pull
+
+### Added
+- Lazy `.originals/` caching: original file content is fetched on-demand from GitHub API only when viewing a diff, then cached locally
+- `diffAsync(path:repo:token:)`: async diff method used by Git panel for on-demand diff loading
+- Commit evicts cache: after a successful push, the committed file's `.originals/` entry is deleted (committed content becomes the new baseline)
+- 11 new unit tests covering storage behaviour (`GitServiceStorageTests`)
+
 ## [0.3.0] - 2026-02-20
 
 ### Added
