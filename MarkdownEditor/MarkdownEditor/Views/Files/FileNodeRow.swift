@@ -6,6 +6,7 @@ enum FileAction {
     case rename(node: FileNode, url: URL)
     case delete(node: FileNode, url: URL)
     case move(sourcePath: String, toDirectory: URL)
+    case toggleFavorite(path: String)
 }
 
 struct FileNodeRow: View {
@@ -13,6 +14,7 @@ struct FileNodeRow: View {
     let repoPath: URL
     let onSelect: (String, FileType) -> Void
     var onAction: ((FileAction) -> Void)? = nil
+    var isFavorite: Bool = false
 
     @State private var isExpanded = false
     @State private var isDropTargeted = false
@@ -42,10 +44,12 @@ struct FileNodeRow: View {
                         .foregroundStyle(.primary)
                     Spacer()
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 4)
                 .background(
                     isDropTargeted
-                        ? RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.12))
+                        ? RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.18))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor.opacity(0.5), lineWidth: 1.5))
                         : nil
                 )
                 .contentShape(Rectangle())
@@ -62,6 +66,13 @@ struct FileNodeRow: View {
                     }
                     Divider()
                     Button {
+                        onAction?(.toggleFavorite(path: node.path))
+                    } label: {
+                        Label(isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                              systemImage: isFavorite ? "star.slash" : "star")
+                    }
+                    Divider()
+                    Button {
                         onAction?(.rename(node: node, url: nodeURL))
                     } label: {
                         Label("Rename", systemImage: "pencil")
@@ -73,15 +84,17 @@ struct FileNodeRow: View {
                     }
                 }
                 .draggable(node.path)
-                .dropDestination(for: String.self) { items, _ in
-                    guard let sourcePath = items.first,
-                          sourcePath != node.path,
-                          !node.path.hasPrefix(sourcePath + "/") else { return false }
-                    onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
-                    return true
-                } isTargeted: { targeted in
-                    isDropTargeted = targeted
-                }
+            }
+            // dropDestination on DisclosureGroup (not just the label) so the full
+            // row area registers drops, avoiding gesture conflicts with List rows.
+            .dropDestination(for: String.self) { items, _ in
+                guard let sourcePath = items.first,
+                      sourcePath != node.path,
+                      !node.path.hasPrefix(sourcePath + "/") else { return false }
+                onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
+                return true
+            } isTargeted: { targeted in
+                isDropTargeted = targeted
             }
         } else {
             Button {
@@ -114,6 +127,13 @@ struct FileNodeRow: View {
                 }
             }
             .contextMenu {
+                Button {
+                    onAction?(.toggleFavorite(path: node.path))
+                } label: {
+                    Label(isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                          systemImage: isFavorite ? "star.slash" : "star")
+                }
+                Divider()
                 Button {
                     onAction?(.rename(node: node, url: nodeURL))
                 } label: {

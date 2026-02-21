@@ -14,6 +14,8 @@ struct Repository: Codable, Identifiable, Hashable {
     let stargazersCount: Int
     let updatedAt: String
     let fork: Bool
+    /// Overrides `localPath` for testing; not persisted (not in CodingKeys).
+    var customLocalPath: URL? = nil
 
     enum CodingKeys: String, CodingKey {
         case id, name, owner, description, fork
@@ -40,6 +42,7 @@ struct Repository: Codable, Identifiable, Hashable {
     }
 
     var localPath: URL {
+        if let customPath = customLocalPath { return customPath }
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("repos/\(fullName)")
     }

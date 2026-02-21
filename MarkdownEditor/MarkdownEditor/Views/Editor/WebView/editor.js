@@ -19,6 +19,7 @@
 
     let isDirty = false;
     let currentMarkdown = '';
+    let currentMode = 'edit'; // 'preview' | 'edit'
 
     // =========================================================================
     // Bridge: unified communication protocol
@@ -38,6 +39,9 @@
                     break;
                 case 'getContent':
                     sendToNative('contentReady', { markdown: getMarkdown() });
+                    break;
+                case 'setMode':
+                    setMode(payload.mode || 'edit');
                     break;
                 case 'insertImage':
                     insertImage(payload.path, payload.alt || '');
@@ -238,7 +242,16 @@
     function htmlToMarkdown(html) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
-        return nodeToMarkdown(tempDiv).trim();
+        let md = nodeToMarkdown(tempDiv);
+
+        // Normalize: collapse 3+ consecutive blank lines to max 2 (iOS contentEditable tends to insert extra divs)
+        md = md.replace(/\n{3,}/g, '\n\n');
+
+        // Trim leading whitespace but preserve a single trailing newline (standard file convention)
+        md = md.replace(/^\s+/, '');
+        md = md.trimEnd() + '\n';
+
+        return md;
     }
 
     function nodeToMarkdown(node) {
@@ -322,7 +335,12 @@
                     result += tableToMarkdown(child) + '\n';
                     break;
                 case 'div':
-                    result += inner + '\n';
+                    // iOS contentEditable inserts <div><br></div> for blank lines — treat as paragraph separator
+                    if (child.children.length === 1 && child.children[0].tagName === 'BR' && !inner.trim()) {
+                        result += '\n';
+                    } else if (inner.trim()) {
+                        result += inner + '\n';
+                    }
                     break;
                 default:
                     result += inner;
@@ -361,7 +379,25 @@
     }
 
     function getMarkdown() {
+        // htmlToMarkdown already normalizes newlines and adds trailing \n
         return htmlToMarkdown(editor.innerHTML);
+    }
+
+    // =========================================================================
+    // Mode switching (preview / edit)
+    // =========================================================================
+
+    function setMode(mode) {
+        currentMode = mode;
+        if (mode === 'preview') {
+            editor.contentEditable = 'false';
+            editor.classList.add('preview-mode');
+            editor.blur();
+        } else {
+            editor.contentEditable = 'true';
+            editor.classList.remove('preview-mode');
+            editor.focus();
+        }
     }
 
     // =========================================================================
@@ -477,13 +513,43 @@
         }
     });
 
-    // Task list checkbox toggle
+    // In preview mode, tap anywhere to request edit mode.
+    // Exception: link taps open the URL without entering edit mode.
     editor.addEventListener('click', function(e) {
+        if (currentMode === 'preview') {
+            const anchor = e.target.closest('a[href]');
+            if (anchor) {
+                e.preventDefault();
+                e.stopPropagation(); // prevent bubble handler from firing a second linkClicked
+                const href = anchor.getAttribute('href');
+                if (href) {
+                    sendToNative('linkClicked', { url: href });
+                }
+                return;
+            }
+            sendToNative('modeChangeRequested', { mode: 'edit' });
+        }
+    }, true); // useCapture to intercept before other handlers
+
+    // Task list checkbox toggle + link navigation
+    editor.addEventListener('click', function(e) {
+        // Handle task list toggles
         const li = e.target.closest('li[data-task]');
         if (li) {
             const current = li.getAttribute('data-task');
             li.setAttribute('data-task', current === 'checked' ? 'unchecked' : 'checked');
             notifyContentChanged();
+            return;
+        }
+
+        // Handle link clicks — open via native (contentEditable blocks default navigation)
+        const anchor = e.target.closest('a[href]');
+        if (anchor) {
+            e.preventDefault();
+            const href = anchor.getAttribute('href');
+            if (href) {
+                sendToNative('linkClicked', { url: href });
+            }
         }
     });
 

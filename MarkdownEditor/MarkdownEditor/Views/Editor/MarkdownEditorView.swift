@@ -7,6 +7,8 @@ struct MarkdownEditorView: UIViewRepresentable {
     @Binding var isDirty: Bool
     var onContentChanged: ((String) -> Void)?
     var onCoordinatorReady: ((Coordinator) -> Void)?
+    var onModeChangeRequested: ((String) -> Void)?
+    var onInternalLinkClicked: ((String) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -165,6 +167,30 @@ struct MarkdownEditorView: UIViewRepresentable {
                     self.parent.onContentChanged?(markdown)
                 }
 
+            case "linkClicked":
+                if let urlString = payload["url"] as? String {
+                    DispatchQueue.main.async {
+                        // Relative path (no scheme) → try in-app navigation
+                        let isExternal = urlString.hasPrefix("http://")
+                            || urlString.hasPrefix("https://")
+                            || urlString.hasPrefix("mailto:")
+                        if isExternal {
+                            if let url = URL(string: urlString) {
+                                UIApplication.shared.open(url)
+                            }
+                        } else {
+                            self.parent.onInternalLinkClicked?(urlString)
+                        }
+                    }
+                }
+
+            case "modeChangeRequested":
+                if let mode = payload["mode"] as? String {
+                    DispatchQueue.main.async {
+                        self.parent.onModeChangeRequested?(mode)
+                    }
+                }
+
             default:
                 break
             }
@@ -183,7 +209,12 @@ struct MarkdownEditorView: UIViewRepresentable {
             // Use JSONEncoder for safe string escaping (handles quotes, newlines, backslashes, etc.)
             let jsonString = (try? JSONEncoder().encode(markdown)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
 
-            let js = "window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });"
+            // Set content then immediately switch to preview mode.
+            // setMode must run after bridge is ready, so chain it here rather than in onCoordinatorReady.
+            let js = """
+                window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });
+                window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: 'preview' } });
+                """
             webView?.evaluateJavaScript(js) { _, error in
                 if let error = error {
                     print("[Editor] JS evaluation error: \(error)")
@@ -205,6 +236,11 @@ struct MarkdownEditorView: UIViewRepresentable {
 
         func insertImage(path: String, alt: String) {
             let js = "window.bridge.receive({ action: 'insertImage', version: 1, payload: { path: '\(path)', alt: '\(alt)' } });"
+            webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+
+        func setMode(_ mode: String) {
+            let js = "window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: '\(mode)' } });"
             webView?.evaluateJavaScript(js, completionHandler: nil)
         }
     }

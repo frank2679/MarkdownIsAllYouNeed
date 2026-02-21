@@ -23,6 +23,8 @@ struct FileTreeView: View {
     @State private var changeCount = 0
     @State private var showGitPanel = false
 
+    @State private var favorites: [String] = []
+
     // New item: parentURL is baked into context, no timing issues
     @State private var newItemContext: NewItemContext? = nil
 
@@ -48,6 +50,40 @@ struct FileTreeView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     SyncStateIndicator(state: syncState)
+                }
+            }
+
+            if !favorites.isEmpty {
+                Section("Favorites") {
+                    ForEach(favorites, id: \.self) { path in
+                        if let node = findNode(path: path, in: fileTree) {
+                            // Directory favorite: render as full expandable FileNodeRow
+                            FileNodeRow(
+                                node: node,
+                                repoPath: repo.localPath,
+                                onSelect: { p, ft in openFile(path: p, fileType: ft) },
+                                onAction: { action in handleFileAction(action) },
+                                isFavorite: true
+                            )
+                        } else {
+                            // File favorite (or node not yet loaded): simple button
+                            let name = (path as NSString).lastPathComponent
+                            let fileType = FileTypeDetector.detect(filename: name)
+                            Button {
+                                openFile(path: path, fileType: fileType)
+                            } label: {
+                                Label(name, systemImage: fileType.iconName)
+                                    .foregroundStyle(.primary)
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    toggleFavorite(path: path)
+                                } label: {
+                                    Label("Remove", systemImage: "star.slash")
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -77,7 +113,8 @@ struct FileTreeView: View {
                             node: node,
                             repoPath: repo.localPath,
                             onSelect: { path, fileType in openFile(path: path, fileType: fileType) },
-                            onAction: { action in handleFileAction(action) }
+                            onAction: { action in handleFileAction(action) },
+                            isFavorite: favorites.contains(node.path)
                         )
                     }
                 }
@@ -125,6 +162,7 @@ struct FileTreeView: View {
             let changes = GitService.shared.status(at: repo.localPath)
             loadFileTree(changes: changes)
             loadRecentFiles()
+            loadFavorites()
             await loadSyncState(changes: changes)
         }
         .sheet(item: $newItemContext) { context in
@@ -211,6 +249,8 @@ struct FileTreeView: View {
             showDeleteConfirm = true
         case .move(let sourcePath, let dir):
             moveItem(from: sourcePath, toDirectory: dir)
+        case .toggleFavorite(let path):
+            toggleFavorite(path: path)
         }
     }
 
@@ -283,6 +323,31 @@ struct FileTreeView: View {
     private func loadRecentFiles() {
         let key = "recentFiles-\(repo.fullName)"
         recentFiles = UserDefaults.standard.stringArray(forKey: key) ?? []
+    }
+
+    private func findNode(path: String, in nodes: [FileNode]) -> FileNode? {
+        for node in nodes {
+            if node.path == path { return node }
+            if node.isDirectory, let children = node.children {
+                if let found = findNode(path: path, in: children) { return found }
+            }
+        }
+        return nil
+    }
+
+    private func loadFavorites() {
+        let key = "favorites-\(repo.fullName)"
+        favorites = UserDefaults.standard.stringArray(forKey: key) ?? []
+    }
+
+    private func toggleFavorite(path: String) {
+        let key = "favorites-\(repo.fullName)"
+        if favorites.contains(path) {
+            favorites.removeAll { $0 == path }
+        } else {
+            favorites.append(path)
+        }
+        UserDefaults.standard.set(favorites, forKey: key)
     }
 
     private func loadSyncState(changes: [FileChange]) async {

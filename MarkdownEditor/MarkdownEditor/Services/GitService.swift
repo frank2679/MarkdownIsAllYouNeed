@@ -569,6 +569,74 @@ final class GitService {
         }
     }
 
+    // MARK: - Discard
+
+    /// Discard local changes for a single file, restoring it to its original state.
+    /// - For `added` files: deletes the local file (it never existed in the remote).
+    /// - For `modified`/`deleted` files: restores from `.originals/` cache or fetches from GitHub.
+    func discardChanges(change: FileChange, repo: Repository, token: String) async throws {
+        let localPath = repo.localPath
+        let fileURL = localPath.appendingPathComponent(change.path)
+        let originalURL = localPath.appendingPathComponent(originalsDir).appendingPathComponent(change.path)
+
+        switch change.changeType {
+        case .added:
+            // New file — just delete it
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+            }
+
+        case .modified, .deleted:
+            // If original is cached locally, restore directly
+            if fileManager.fileExists(atPath: originalURL.path) {
+                let originalDir = fileURL.deletingLastPathComponent()
+                if !fileManager.fileExists(atPath: originalDir.path) {
+                    try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+                }
+                if fileManager.fileExists(atPath: fileURL.path) {
+                    try fileManager.removeItem(at: fileURL)
+                }
+                try fileManager.copyItem(at: originalURL, to: fileURL)
+                return
+            }
+
+            // Otherwise fetch from GitHub at the snapshot commit SHA
+            guard let snapshot = loadSnapshot(for: localPath),
+                  snapshot.files[change.path] != nil else {
+                throw GitError.snapshotCorrupted
+            }
+
+            let parts = repo.fullName.split(separator: "/")
+            guard parts.count == 2 else { throw GitError.commitFailed("Invalid repo name") }
+            let owner = String(parts[0])
+            let repoName = String(parts[1])
+
+            let provider = GitHubProvider(token: token)
+            let originalData = try await provider.getFileContent(
+                owner: owner, repo: repoName,
+                path: change.path, ref: snapshot.headCommitSHA
+            )
+
+            // Restore the file
+            let originalDir = fileURL.deletingLastPathComponent()
+            if !fileManager.fileExists(atPath: originalDir.path) {
+                try fileManager.createDirectory(at: originalDir, withIntermediateDirectories: true)
+            }
+            try originalData.write(to: fileURL)
+
+            // Also cache in .originals for future diffs
+            let originalsBase = localPath.appendingPathComponent(originalsDir)
+            if !fileManager.fileExists(atPath: originalsBase.path) {
+                try fileManager.createDirectory(at: originalsBase, withIntermediateDirectories: true)
+            }
+            let originalCacheDir = originalURL.deletingLastPathComponent()
+            if !fileManager.fileExists(atPath: originalCacheDir.path) {
+                try fileManager.createDirectory(at: originalCacheDir, withIntermediateDirectories: true)
+            }
+            try originalData.write(to: originalURL)
+        }
+    }
+
     // MARK: - Existing Operations
 
     /// Delete a cloned repo from local storage
