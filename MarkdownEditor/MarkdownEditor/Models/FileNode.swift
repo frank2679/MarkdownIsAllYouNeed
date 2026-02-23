@@ -22,6 +22,7 @@ enum FileType {
     case markdown
     case text
     case image
+    case pdf
     case binary
 
     var iconName: String {
@@ -29,6 +30,7 @@ enum FileType {
         case .markdown: return "doc.richtext"
         case .text: return "doc.text"
         case .image: return "photo"
+        case .pdf: return "doc.fill"
         case .binary: return "doc"
         }
     }
@@ -38,6 +40,7 @@ enum FileType {
         case .markdown: return "blue"
         case .text: return "primary"
         case .image: return "green"
+        case .pdf: return "red"
         case .binary: return "secondary"
         }
     }

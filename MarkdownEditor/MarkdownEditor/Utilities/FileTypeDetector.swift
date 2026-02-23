@@ -21,6 +21,7 @@ enum FileTypeDetector {
 
         if markdownExtensions.contains(ext) { return .markdown }
         if imageExtensions.contains(ext) { return .image }
+        if ext == "pdf" { return .pdf }
         if textExtensions.contains(ext) { return .text }
 
         // Files without extensions that are typically text

@@ -10,6 +10,13 @@ struct NewItemContext: Identifiable {
     let locationLabel: String
 }
 
+// MARK: - Move To Context
+
+struct MoveToContext: Identifiable {
+    let id = UUID()
+    let node: FileNode
+}
+
 // MARK: - FileTreeView
 
 struct FileTreeView: View {
@@ -27,6 +34,9 @@ struct FileTreeView: View {
 
     // New item: parentURL is baked into context, no timing issues
     @State private var newItemContext: NewItemContext? = nil
+
+    // Move To
+    @State private var moveToContext: MoveToContext? = nil
 
     // Rename
     @State private var showRenameAlert = false
@@ -170,6 +180,15 @@ struct FileTreeView: View {
                 createNewItem(name: name, isDirectory: isDir, in: url)
             }
         }
+        .sheet(item: $moveToContext) { context in
+            MoveToSheet(
+                context: context,
+                repoPath: repo.localPath,
+                fileTree: fileTree
+            ) { destination in
+                moveItem(from: context.node.path, toDirectory: destination)
+            }
+        }
         .alert("Rename", isPresented: $showRenameAlert) {
             TextField("New name", text: $newName).autocorrectionDisabled()
             Button("Rename") { performRename() }
@@ -206,6 +225,11 @@ struct FileTreeView: View {
                 )
             case .image:
                 ImagePreviewView(
+                    fileURL: repo.localPath.appendingPathComponent(selection.path),
+                    fileName: (selection.path as NSString).lastPathComponent
+                )
+            case .pdf:
+                PDFPreviewView(
                     fileURL: repo.localPath.appendingPathComponent(selection.path),
                     fileName: (selection.path as NSString).lastPathComponent
                 )
@@ -249,6 +273,8 @@ struct FileTreeView: View {
             showDeleteConfirm = true
         case .move(let sourcePath, let dir):
             moveItem(from: sourcePath, toDirectory: dir)
+        case .moveTo(let node):
+            moveToContext = MoveToContext(node: node)
         case .toggleFavorite(let path):
             toggleFavorite(path: path)
         }
@@ -459,6 +485,65 @@ struct NewItemSheet: View {
             n += ".md"
         }
         return n
+    }
+}
+
+// MARK: - Move To Sheet
+
+struct MoveToSheet: View {
+    let context: MoveToContext
+    let repoPath: URL
+    let fileTree: [FileNode]
+    let onMove: (URL) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Button {
+                    onMove(repoPath)
+                    dismiss()
+                } label: {
+                    Label("/ (Root)", systemImage: "house")
+                        .foregroundStyle(.primary)
+                }
+
+                ForEach(availableDirectories, id: \.path) { node in
+                    Button {
+                        onMove(repoPath.appendingPathComponent(node.path))
+                        dismiss()
+                    } label: {
+                        Label(node.path, systemImage: "folder")
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+            .navigationTitle("Move \"\(context.node.name)\" To")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private var availableDirectories: [FileNode] {
+        var result: [FileNode] = []
+        collectDirectories(from: fileTree, excludePath: context.node.path, into: &result)
+        return result.sorted { $0.path < $1.path }
+    }
+
+    private func collectDirectories(from nodes: [FileNode], excludePath: String, into result: inout [FileNode]) {
+        for node in nodes where node.isDirectory {
+            // Exclude the node being moved and its descendants
+            guard node.path != excludePath && !node.path.hasPrefix(excludePath + "/") else { continue }
+            result.append(node)
+            if let children = node.children {
+                collectDirectories(from: children, excludePath: excludePath, into: &result)
+            }
+        }
     }
 }
 

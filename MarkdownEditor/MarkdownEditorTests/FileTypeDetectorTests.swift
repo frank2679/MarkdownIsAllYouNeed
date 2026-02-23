@@ -65,14 +65,20 @@ final class FileTypeDetectorTests: XCTestCase {
         XCTAssertEqual(FileTypeDetector.detect(filename: "icon.svg"), .image)
     }
 
+    // MARK: - PDF
+
+    func testDetect_pdfExtension_returnsPdf() {
+        XCTAssertEqual(FileTypeDetector.detect(filename: "document.pdf"), .pdf)
+    }
+
+    func testDetect_uppercasePdfExtension_returnsPdf() {
+        XCTAssertEqual(FileTypeDetector.detect(filename: "report.PDF"), .pdf)
+    }
+
     // MARK: - Binary
 
     func testDetect_zipExtension_returnsBinary() {
         XCTAssertEqual(FileTypeDetector.detect(filename: "archive.zip"), .binary)
-    }
-
-    func testDetect_pdfExtension_returnsBinary() {
-        XCTAssertEqual(FileTypeDetector.detect(filename: "document.pdf"), .binary)
     }
 
     // MARK: - Known text filenames (no extension)

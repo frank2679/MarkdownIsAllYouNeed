@@ -6,6 +6,7 @@ enum FileAction {
     case rename(node: FileNode, url: URL)
     case delete(node: FileNode, url: URL)
     case move(sourcePath: String, toDirectory: URL)
+    case moveTo(node: FileNode)
     case toggleFavorite(path: String)
 }
 
@@ -17,7 +18,6 @@ struct FileNodeRow: View {
     var isFavorite: Bool = false
 
     @State private var isExpanded = false
-    @State private var isDropTargeted = false
 
     private var nodeURL: URL {
         repoPath.appendingPathComponent(node.path)
@@ -37,8 +37,6 @@ struct FileNodeRow: View {
                     }
                 }
             } label: {
-                // Context menu lives on the label so it targets THIS row,
-                // not a parent DisclosureGroup when nested in a List.
                 HStack {
                     Label(node.name, systemImage: isExpanded ? "folder.fill" : "folder")
                         .foregroundStyle(.primary)
@@ -46,12 +44,6 @@ struct FileNodeRow: View {
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 4)
-                .background(
-                    isDropTargeted
-                        ? RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.18))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor.opacity(0.5), lineWidth: 1.5))
-                        : nil
-                )
                 .contentShape(Rectangle())
                 .contextMenu {
                     Button {
@@ -63,6 +55,12 @@ struct FileNodeRow: View {
                         onAction?(.createDirectory(inDirectory: nodeURL))
                     } label: {
                         Label("New Folder", systemImage: "folder.badge.plus")
+                    }
+                    Divider()
+                    Button {
+                        onAction?(.moveTo(node: node))
+                    } label: {
+                        Label("Move To…", systemImage: "folder.badge.arrow.right")
                     }
                     Divider()
                     Button {
@@ -83,18 +81,6 @@ struct FileNodeRow: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .draggable(node.path)
-            }
-            // dropDestination on DisclosureGroup (not just the label) so the full
-            // row area registers drops, avoiding gesture conflicts with List rows.
-            .dropDestination(for: String.self) { items, _ in
-                guard let sourcePath = items.first,
-                      sourcePath != node.path,
-                      !node.path.hasPrefix(sourcePath + "/") else { return false }
-                onAction?(.move(sourcePath: sourcePath, toDirectory: nodeURL))
-                return true
-            } isTargeted: { targeted in
-                isDropTargeted = targeted
             }
         } else {
             Button {
@@ -128,6 +114,12 @@ struct FileNodeRow: View {
             }
             .contextMenu {
                 Button {
+                    onAction?(.moveTo(node: node))
+                } label: {
+                    Label("Move To…", systemImage: "folder.badge.arrow.right")
+                }
+                Divider()
+                Button {
                     onAction?(.toggleFavorite(path: node.path))
                 } label: {
                     Label(isFavorite ? "Remove from Favorites" : "Add to Favorites",
@@ -145,7 +137,19 @@ struct FileNodeRow: View {
                     Label("Delete", systemImage: "trash")
                 }
             }
-            .draggable(node.path)
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    onAction?(.delete(node: node, url: nodeURL))
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                Button {
+                    onAction?(.moveTo(node: node))
+                } label: {
+                    Label("Move To", systemImage: "folder.badge.arrow.right")
+                }
+                .tint(.blue)
+            }
         }
     }
 
@@ -154,6 +158,7 @@ struct FileNodeRow: View {
         case .markdown: return .blue
         case .text: return .primary
         case .image: return .green
+        case .pdf: return .red
         case .binary: return .secondary
         }
     }
