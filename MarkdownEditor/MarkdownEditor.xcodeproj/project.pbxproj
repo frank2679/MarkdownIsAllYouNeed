@@ -46,6 +46,7 @@
 		AA000037 /* ChangeFileRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000037 /* ChangeFileRow.swift */; };
 		AA000038 /* DiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000038 /* DiffView.swift */; };
 		AA000039 /* GitPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000039 /* GitPanelView.swift */; };
+		AA000041 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000041 /* PDFPreviewView.swift */; };
 		AA000101 /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000101 /* DiffEngineTests.swift */; };
 		AA000102 /* FileTypeDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000102 /* FileTypeDetectorTests.swift */; };
 		AA000103 /* FileManagerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000103 /* FileManagerServiceTests.swift */; };
@@ -90,6 +91,7 @@
 		BB000024 /* TextFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFileView.swift; sourceTree = "<group>"; };
 		BB000025 /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		BB000026 /* BinaryFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileView.swift; sourceTree = "<group>"; };
+		BB000041 /* PDFPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPreviewView.swift; sourceTree = "<group>"; };
 		BB000027 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
 		BB000028 /* EditorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorToolbar.swift; sourceTree = "<group>"; };
 		BB000029 /* MarkdownEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorScreen.swift; sourceTree = "<group>"; };
@@ -261,6 +263,7 @@
 				BB000024 /* TextFileView.swift */,
 				BB000025 /* ImagePreviewView.swift */,
 				BB000026 /* BinaryFileView.swift */,
+				BB000041 /* PDFPreviewView.swift */,
 			);
 			path = Files;
 			sourceTree = "<group>";
@@ -444,6 +447,7 @@
 				AA000024 /* TextFileView.swift in Sources */,
 				AA000025 /* ImagePreviewView.swift in Sources */,
 				AA000026 /* BinaryFileView.swift in Sources */,
+				AA000041 /* PDFPreviewView.swift in Sources */,
 				AA000027 /* MarkdownEditorView.swift in Sources */,
 				AA000028 /* EditorToolbar.swift in Sources */,
 				AA000029 /* MarkdownEditorScreen.swift in Sources */,
@@ -616,7 +620,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -645,7 +649,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hangyang1223.MarkdownEditor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
