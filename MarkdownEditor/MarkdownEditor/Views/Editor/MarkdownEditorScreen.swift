@@ -1,14 +1,40 @@
 import SwiftUI
 
+// MARK: - Font Size
+
+enum MarkdownFontSize: Int, CaseIterable {
+    case xs = 12
+    case s  = 14
+    case m  = 16
+    case l  = 18
+    case xl = 20
+
+    var label: String {
+        switch self {
+        case .xs: return "XS"
+        case .s:  return "S"
+        case .m:  return "M"
+        case .l:  return "L"
+        case .xl: return "XL"
+        }
+    }
+}
+
+// MARK: - LinkedFile
+
 private struct LinkedFile: Identifiable {
     let id = UUID()
     let url: URL
     var name: String { url.lastPathComponent }
 }
 
+// MARK: - MarkdownEditorScreen
+
 struct MarkdownEditorScreen: View {
     let fileURL: URL
     let fileName: String
+    var repo: Repository? = nil
+    var onFileMoved: (() -> Void)? = nil
 
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
@@ -21,8 +47,30 @@ struct MarkdownEditorScreen: View {
     @State private var isEditMode = false
     @State private var linkedFile: LinkedFile?
 
+    // Favorite
+    @State private var isFavorite = false
+
+    // Move To
+    @State private var moveToContext: MoveToContext? = nil
+    @State private var fileTreeForMove: [FileNode] = []
+
+    // Font Size — global preference, persisted via AppStorage
+    @AppStorage("markdownFontSize") private var fontSizeRaw: Int = MarkdownFontSize.m.rawValue
+
+    private var fontSize: MarkdownFontSize {
+        MarkdownFontSize(rawValue: fontSizeRaw) ?? .m
+    }
+
     private var fileExists: Bool {
         FileManager.default.fileExists(atPath: fileURL.path)
+    }
+
+    private var relativePath: String? {
+        guard let repo else { return nil }
+        let repoPath = repo.localPath.path
+        let filePath = fileURL.path
+        guard filePath.hasPrefix(repoPath + "/") else { return nil }
+        return String(filePath.dropFirst(repoPath.count + 1))
     }
 
     var body: some View {
@@ -39,14 +87,7 @@ struct MarkdownEditorScreen: View {
                 .background(.orange)
             }
 
-            // Toolbar — only visible in edit mode
-            if isEditMode {
-                EditorToolbar { format in
-                    coordinatorRef?.applyFormat(format)
-                }
-            }
-
-            // WYSIWYG Editor
+            // WYSIWYG Editor (EditorToolbar is now inputAccessoryView above keyboard)
             MarkdownEditorView(
                 fileURL: fileURL,
                 fileName: fileName,
@@ -56,8 +97,6 @@ struct MarkdownEditorScreen: View {
                 },
                 onCoordinatorReady: { coordinator in
                     coordinatorRef = coordinator
-                    // setMode("preview") is now chained in loadFileContent() after the
-                    // bridge is ready, so this call is intentionally left as a no-op.
                 },
                 onModeChangeRequested: { mode in
                     switchMode(to: mode)
@@ -70,18 +109,54 @@ struct MarkdownEditorScreen: View {
                     if FileManager.default.fileExists(atPath: resolved.path) {
                         linkedFile = LinkedFile(url: resolved)
                     }
-                }
+                },
+                fontSize: fontSizeRaw
             )
         }
         .navigationTitle(fileName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if isEditMode {
-                    Button("Done") {
-                        switchMode(to: "preview")
+                Menu {
+                    // Favorite / Move To — only when repo context is available
+                    if let repo, let path = relativePath {
+                        Button {
+                            toggleFavorite(path: path, repoFullName: repo.fullName)
+                        } label: {
+                            Label(
+                                isFavorite ? "Unfavorite" : "Favorite",
+                                systemImage: isFavorite ? "star.slash" : "star"
+                            )
+                        }
+
+                        Button {
+                            showMoveTo(repo: repo)
+                        } label: {
+                            Label("Move To...", systemImage: "folder")
+                        }
+
+                        Divider()
                     }
-                    .fontWeight(.semibold)
+
+                    // Font Size submenu
+                    Menu {
+                        ForEach(MarkdownFontSize.allCases, id: \.rawValue) { size in
+                            Button {
+                                fontSizeRaw = size.rawValue
+                                coordinatorRef?.setFontSize(size.rawValue)
+                            } label: {
+                                if fontSize == size {
+                                    Label(size.label, systemImage: "checkmark")
+                                } else {
+                                    Text(size.label)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Font Size", systemImage: "textformat.size")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -97,10 +172,22 @@ struct MarkdownEditorScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .onAppear {
+            if let repo, let path = relativePath {
+                loadFavoriteState(path: path, repoFullName: repo.fullName)
+            }
+        }
         .onDisappear {
-            // Auto-save when navigating away from the editor
             if isDirty {
                 saveFile(showToast: false)
+            }
+        }
+        // Keyboard dismiss = Done: auto-save + switch to preview
+        .onReceive(NotificationCenter.default.publisher(
+            for: UIResponder.keyboardWillHideNotification
+        )) { _ in
+            if isEditMode {
+                switchMode(to: "preview")
             }
         }
         .sheet(item: $linkedFile) { file in
@@ -114,7 +201,18 @@ struct MarkdownEditorScreen: View {
                     }
             }
         }
+        .sheet(item: $moveToContext) { context in
+            MoveToSheet(
+                context: context,
+                repoPath: repo!.localPath,
+                fileTree: fileTreeForMove
+            ) { destination in
+                performMove(to: destination)
+            }
+        }
     }
+
+    // MARK: - Mode
 
     private func switchMode(to mode: String) {
         if mode == "preview" && isEditMode && isDirty {
@@ -125,6 +223,8 @@ struct MarkdownEditorScreen: View {
         }
         coordinatorRef?.setMode(mode)
     }
+
+    // MARK: - Save
 
     private func saveFile(showToast: Bool) {
         guard !currentMarkdown.isEmpty || isDirty else { return }
@@ -154,5 +254,53 @@ struct MarkdownEditorScreen: View {
         }
 
         isSaving = false
+    }
+
+    // MARK: - Favorite
+
+    private func loadFavoriteState(path: String, repoFullName: String) {
+        let key = "favorites-\(repoFullName)"
+        let favorites = UserDefaults.standard.stringArray(forKey: key) ?? []
+        isFavorite = favorites.contains(path)
+    }
+
+    private func toggleFavorite(path: String, repoFullName: String) {
+        let key = "favorites-\(repoFullName)"
+        var favorites = UserDefaults.standard.stringArray(forKey: key) ?? []
+        if isFavorite {
+            favorites.removeAll { $0 == path }
+        } else {
+            favorites.append(path)
+        }
+        UserDefaults.standard.set(favorites, forKey: key)
+        isFavorite.toggle()
+    }
+
+    // MARK: - Move To
+
+    private func showMoveTo(repo: Repository) {
+        guard let path = relativePath else { return }
+        if isDirty { saveFile(showToast: false) }
+        fileTreeForMove = FileManagerService.shared.buildFileTree(at: repo.localPath)
+        let node = FileNode(
+            name: fileName,
+            path: path,
+            isDirectory: false,
+            fileType: .markdown
+        )
+        moveToContext = MoveToContext(node: node)
+    }
+
+    private func performMove(to destination: URL) {
+        let destURL = destination.appendingPathComponent(fileURL.lastPathComponent)
+        guard fileURL.standardizedFileURL != destURL.standardizedFileURL,
+              !destination.path.hasPrefix(fileURL.path + "/") else { return }
+        do {
+            try FileManagerService.shared.move(from: fileURL, to: destURL)
+            onFileMoved?()
+            dismiss()
+        } catch {
+            print("Move failed: \(error)")
+        }
     }
 }
