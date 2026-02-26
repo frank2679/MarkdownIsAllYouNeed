@@ -167,6 +167,9 @@ MarkdownIsAllYouNeed/
 | v0.1.0 | MVP：GitHub 登录、clone、编辑、push | 已发布 |
 | v0.2.0 | 稳定性修复（table 渲染、icon、路径修复） | 已发布 |
 | v0.3.0 | 文件操作（新建、重命名、删除、拖拽移动）+ 测试基础设施 | 已发布 |
-| v0.4.0 | 存储优化（lazy .originals 缓存，减少 ~50% 占用） | PR #11 待 merge |
-| v0.5.0 | 编辑体验优化（Notion 风格编辑模式、favorite、discard、bug 修复） | 进行中 |
+| v0.4.0 | 存储优化（lazy .originals 缓存，减少 ~50% 占用） | 已发布 |
+| v0.5.0 | 编辑体验优化（Notion 风格编辑模式、favorite、discard、bug 修复） | 已发布 |
+| v0.5.1 | Move To UX、PDF 支持 | 已发布 |
+| v0.5.2 | 编辑器菜单（favorite/move-to/字体大小）、键盘工具栏、格式 toggle 修复 | 已发布 |
+| v0.5.3 | 编辑器稳定性修复、工具栏回退键、格式按键 toggle、页面分享 | 进行中 |
 | v0.6.0+ | AI Chat 功能 | 待规划 |
