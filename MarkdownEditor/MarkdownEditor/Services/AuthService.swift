@@ -6,12 +6,14 @@ final class AuthService: NSObject {
 
     func login() async throws {
         let token = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-            let urlString = "https://github.com/login/oauth/authorize"
-                + "?client_id=\(AppConstants.githubClientID)"
-                + "&redirect_uri=\(AppConstants.githubCallbackURL)"
-                + "&scope=\(AppConstants.githubScopes)"
+            var components = URLComponents(string: "https://github.com/login/oauth/authorize")!
+            components.queryItems = [
+                URLQueryItem(name: "client_id", value: AppConstants.githubClientID),
+                URLQueryItem(name: "redirect_uri", value: AppConstants.githubCallbackURL),
+                URLQueryItem(name: "scope", value: AppConstants.githubScopes),
+            ]
 
-            guard let url = URL(string: urlString) else {
+            guard let url = components.url else {
                 continuation.resume(throwing: AuthError.invalidURL)
                 return
             }
@@ -45,7 +47,11 @@ final class AuthService: NSObject {
 
             DispatchQueue.main.async {
                 session.presentationContextProvider = self
-                session.prefersEphemeralWebBrowserSession = false
+                // Use ephemeral session so GitHub always shows the consent page
+                // with the current scope list. Without this, Safari reuses an
+                // existing GitHub session and silently re-issues a token with
+                // the old scope set (e.g. missing `gist`).
+                session.prefersEphemeralWebBrowserSession = true
                 session.start()
             }
             self.webAuthSession = session
