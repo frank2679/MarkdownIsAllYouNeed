@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Font Size
 
@@ -54,6 +55,11 @@ struct MarkdownEditorScreen: View {
     @State private var moveToContext: MoveToContext? = nil
     @State private var fileTreeForMove: [FileNode] = []
 
+    // Share
+    @State private var isCreatingGist = false
+    @State private var gistError: String? = nil
+    @State private var showGistError = false
+
     // Font Size — global preference, persisted via AppStorage
     @AppStorage("markdownFontSize") private var fontSizeRaw: Int = MarkdownFontSize.m.rawValue
 
@@ -71,6 +77,12 @@ struct MarkdownEditorScreen: View {
         let filePath = fileURL.path
         guard filePath.hasPrefix(repoPath + "/") else { return nil }
         return String(filePath.dropFirst(repoPath.count + 1))
+    }
+
+    private var githubBlobURL: URL? {
+        guard let repo, let path = relativePath else { return nil }
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        return URL(string: "https://github.com/\(repo.fullName)/blob/\(repo.defaultBranch)/\(encodedPath)")
     }
 
     var body: some View {
@@ -138,6 +150,34 @@ struct MarkdownEditorScreen: View {
                         Divider()
                     }
 
+                    // Share
+                    if let url = githubBlobURL {
+                        Button {
+                            presentShareSheet(items: [url])
+                        } label: {
+                            Label("Share Link", systemImage: "link")
+                        }
+                    }
+
+                    Button {
+                        shareAsGist()
+                    } label: {
+                        if isCreatingGist {
+                            Label("Creating Gist…", systemImage: "hourglass")
+                        } else {
+                            Label("Share as Gist", systemImage: "doc.text.magnifyingglass")
+                        }
+                    }
+                    .disabled(isCreatingGist)
+
+                    Button {
+                        exportHTML()
+                    } label: {
+                        Label("Export HTML", systemImage: "safari")
+                    }
+
+                    Divider()
+
                     // Font Size submenu
                     Menu {
                         ForEach(MarkdownFontSize.allCases, id: \.rawValue) { size in
@@ -189,6 +229,17 @@ struct MarkdownEditorScreen: View {
             if isEditMode {
                 switchMode(to: "preview")
             }
+        }
+        // Reload content if WebView was killed by iOS after long backgrounding
+        .onReceive(NotificationCenter.default.publisher(
+            for: UIApplication.willEnterForegroundNotification
+        )) { _ in
+            coordinatorRef?.reloadContentIfEmpty(fallbackMarkdown: currentMarkdown, fontSize: fontSizeRaw)
+        }
+        .alert("Gist Error", isPresented: $showGistError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(gistError ?? "Failed to create Gist")
         }
         .sheet(item: $linkedFile) { file in
             NavigationStack {
@@ -301,6 +352,83 @@ struct MarkdownEditorScreen: View {
             dismiss()
         } catch {
             print("Move failed: \(error)")
+        }
+    }
+
+    // MARK: - Share
+
+    private func presentShareSheet(items: [Any]) {
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else { return }
+        var topVC = rootVC
+        while let presented = topVC.presentedViewController { topVC = presented }
+        topVC.present(activityVC, animated: true)
+    }
+
+    private func shareAsGist() {
+        guard let token = appState.authService.getAccessToken() else { return }
+        isCreatingGist = true
+        let content = currentMarkdown.isEmpty
+            ? (FileManagerService.shared.readFileContent(at: fileURL) ?? "")
+            : currentMarkdown
+        Task {
+            do {
+                let url = try await GitHubProvider(token: token).createGist(fileName: fileName, content: content)
+                await MainActor.run {
+                    isCreatingGist = false
+                    presentShareSheet(items: [url])
+                }
+            } catch {
+                await MainActor.run {
+                    isCreatingGist = false
+                    gistError = error.localizedDescription
+                    showGistError = true
+                }
+            }
+        }
+    }
+
+    private func exportHTML() {
+        coordinatorRef?.getRenderedHTML { [self] innerHTML in
+            let html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>\(fileName)</title>
+            <style>
+            body { font-family: -apple-system, sans-serif; font-size: 16px; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
+            h1, h2, h3 { font-weight: 600; margin: 1.2em 0 0.6em; }
+            p { margin: 0.8em 0; }
+            code { font-family: "SF Mono", Menlo, monospace; font-size: 0.9em; background: #f5f5f5; padding: 2px 6px; border-radius: 4px; }
+            pre { background: #f5f5f5; padding: 12px 16px; border-radius: 8px; overflow-x: auto; }
+            pre code { background: none; padding: 0; }
+            blockquote { border-left: 3px solid #d0d0d0; padding-left: 16px; margin: 1em 0; color: #666; }
+            img { max-width: 100%; height: auto; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }
+            th { background: #f5f5f5; font-weight: 600; }
+            a { color: #0066cc; }
+            </style>
+            </head>
+            <body>
+            \(innerHTML ?? "")
+            </body>
+            </html>
+            """
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(fileName.replacingOccurrences(of: ".md", with: ""))
+                .appendingPathExtension("html")
+            do {
+                try html.write(to: tempURL, atomically: true, encoding: .utf8)
+                DispatchQueue.main.async {
+                    self.presentShareSheet(items: [tempURL])
+                }
+            } catch {
+                print("Export HTML failed: \(error)")
+            }
         }
     }
 }

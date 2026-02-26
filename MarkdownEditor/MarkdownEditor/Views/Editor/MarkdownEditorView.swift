@@ -281,5 +281,50 @@ struct MarkdownEditorView: UIViewRepresentable {
             let js = "window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(size) } });"
             webView?.evaluateJavaScript(js, completionHandler: nil)
         }
+
+        func undo() {
+            let js = "window.bridge.receive({ action: 'undo', version: 1, payload: {} });"
+            webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+
+        func redo() {
+            let js = "window.bridge.receive({ action: 'redo', version: 1, payload: {} });"
+            webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+
+        func getRenderedHTML(completion: @escaping (String?) -> Void) {
+            webView?.evaluateJavaScript("document.getElementById('editor')?.innerHTML ?? ''") { result, _ in
+                completion(result as? String)
+            }
+        }
+
+        /// Reload content into WebView if the editor is empty (e.g. after iOS killed the Web Process).
+        /// Prefers in-memory markdown to avoid losing unsaved edits; falls back to disk.
+        func reloadContentIfEmpty(fallbackMarkdown: String, fontSize: Int) {
+            webView?.evaluateJavaScript(
+                "document.getElementById('editor')?.innerHTML ?? ''"
+            ) { [weak self] result, _ in
+                guard let self else { return }
+                let html = (result as? String) ?? ""
+                let isEmpty = html.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    || html == "<br>" || html == "<br/>"
+                guard isEmpty else { return }
+
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    let markdown = fallbackMarkdown.isEmpty
+                        ? (FileManagerService.shared.readFileContent(at: self.parent.fileURL) ?? "")
+                        : fallbackMarkdown
+                    let jsonString = (try? JSONEncoder().encode(markdown))
+                        .flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
+                    let js = """
+                        window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });
+                        window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: 'preview' } });
+                        window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(fontSize) } });
+                        """
+                    self.webView?.evaluateJavaScript(js, completionHandler: nil)
+                }
+            }
+        }
     }
 }

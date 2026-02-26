@@ -108,6 +108,35 @@ final class GitHubProvider: RemoteProvider {
         return try JSONDecoder().decode(GitRefResponse.self, from: data)
     }
 
+    // MARK: - Gist
+
+    /// POST /gists — create a public gist from the given file content.
+    /// Returns the HTML URL of the created gist (https://gist.github.com/{id}).
+    func createGist(fileName: String, content: String) async throws -> URL {
+        struct GistFile: Encodable { let content: String }
+        struct GistRequest: Encodable {
+            let description: String
+            let `public`: Bool
+            let files: [String: GistFile]
+        }
+        let body = GistRequest(
+            description: fileName,
+            public: true,
+            files: [fileName: GistFile(content: content)]
+        )
+        let data = try await request(
+            path: "/gists",
+            method: "POST",
+            body: try JSONEncoder().encode(body)
+        )
+        struct GistResponse: Decodable { let html_url: String }
+        let response = try JSONDecoder().decode(GistResponse.self, from: data)
+        guard let url = URL(string: response.html_url) else {
+            throw GitHubError.invalidResponse
+        }
+        return url
+    }
+
     // MARK: - HTTP Request
 
     private func request(
