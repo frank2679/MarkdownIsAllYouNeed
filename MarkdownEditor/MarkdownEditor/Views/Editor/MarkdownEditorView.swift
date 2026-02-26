@@ -1,5 +1,15 @@
 import SwiftUI
+import UIKit
 import WebKit
+
+// MARK: - KeyboardAccessoryWebView
+
+class KeyboardAccessoryWebView: WKWebView {
+    var accessoryView: UIView?
+    override var inputAccessoryView: UIView? { accessoryView }
+}
+
+// MARK: - MarkdownEditorView
 
 struct MarkdownEditorView: UIViewRepresentable {
     let fileURL: URL
@@ -9,12 +19,13 @@ struct MarkdownEditorView: UIViewRepresentable {
     var onCoordinatorReady: ((Coordinator) -> Void)?
     var onModeChangeRequested: ((String) -> Void)?
     var onInternalLinkClicked: ((String) -> Void)?
+    var fontSize: Int = 16
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
-    func makeUIView(context: Context) -> WKWebView {
+    func makeUIView(context: Context) -> KeyboardAccessoryWebView {
         let config = WKWebViewConfiguration()
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "bridge")
@@ -23,11 +34,28 @@ struct MarkdownEditorView: UIViewRepresentable {
         // Allow file access for local images
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
 
-        let webView = WKWebView(frame: .zero, configuration: config)
+        let webView = KeyboardAccessoryWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.keyboardDismissMode = .interactive
         webView.isOpaque = false
         webView.backgroundColor = .systemBackground
+
+        // EditorToolbar as inputAccessoryView (appears above keyboard)
+        let toolbarHost = UIHostingController(
+            rootView: EditorToolbar(
+                onFormat: { [weak coordinator = context.coordinator] format in
+                    coordinator?.applyFormat(format)
+                },
+                onDismissKeyboard: { [weak webView] in
+                    webView?.endEditing(true)
+                }
+            )
+        )
+        toolbarHost.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44)
+        toolbarHost.view.autoresizingMask = .flexibleWidth
+        toolbarHost.view.backgroundColor = .clear
+        context.coordinator.toolbarHostingController = toolbarHost
+        webView.accessoryView = toolbarHost.view
 
         // Load editor HTML from bundle
         // Files are added as a group (not folder reference), so they're in the bundle root
@@ -46,7 +74,7 @@ struct MarkdownEditorView: UIViewRepresentable {
         return webView
     }
 
-    func updateUIView(_ uiView: WKWebView, context: Context) {
+    func updateUIView(_ uiView: KeyboardAccessoryWebView, context: Context) {
         // No dynamic updates needed — content is set via bridge after page loads
     }
 
@@ -121,6 +149,8 @@ struct MarkdownEditorView: UIViewRepresentable {
                         try { webkit.messageHandlers.bridge.postMessage({ action: 'contentReady', version: 1, payload: { markdown: editor.innerText } }); } catch(e) {}
                     } else if (msg.action === 'formatText') {
                         document.execCommand(msg.payload.format === 'bold' ? 'bold' : msg.payload.format === 'italic' ? 'italic' : 'bold', false, null);
+                    } else if (msg.action === 'setFontSize') {
+                        document.body.style.fontSize = msg.payload.size + 'px';
                     }
                 }
             };
@@ -137,6 +167,7 @@ struct MarkdownEditorView: UIViewRepresentable {
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         let parent: MarkdownEditorView
         var webView: WKWebView?
+        var toolbarHostingController: UIViewController?  // retains toolbar host
         private var contentLoaded = false
 
         init(_ parent: MarkdownEditorView) {
@@ -209,11 +240,13 @@ struct MarkdownEditorView: UIViewRepresentable {
             // Use JSONEncoder for safe string escaping (handles quotes, newlines, backslashes, etc.)
             let jsonString = (try? JSONEncoder().encode(markdown)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
 
-            // Set content then immediately switch to preview mode.
-            // setMode must run after bridge is ready, so chain it here rather than in onCoordinatorReady.
+            let initialFontSize = parent.fontSize
+
+            // Set content, switch to preview, and apply initial font size
             let js = """
                 window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });
                 window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: 'preview' } });
+                window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(initialFontSize) } });
                 """
             webView?.evaluateJavaScript(js) { _, error in
                 if let error = error {
@@ -241,6 +274,11 @@ struct MarkdownEditorView: UIViewRepresentable {
 
         func setMode(_ mode: String) {
             let js = "window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: '\(mode)' } });"
+            webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+
+        func setFontSize(_ size: Int) {
+            let js = "window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(size) } });"
             webView?.evaluateJavaScript(js, completionHandler: nil)
         }
     }

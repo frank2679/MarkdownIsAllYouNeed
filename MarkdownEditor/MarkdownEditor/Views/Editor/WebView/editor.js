@@ -49,6 +49,9 @@
                 case 'formatText':
                     applyFormat(payload.format);
                     break;
+                case 'setFontSize':
+                    document.body.style.fontSize = payload.size + 'px';
+                    break;
                 default:
                     console.warn('Unknown action:', action);
             }
@@ -433,13 +436,13 @@
                 document.execCommand('insertOrderedList', false, null);
                 break;
             case 'blockquote':
-                document.execCommand('formatBlock', false, 'blockquote');
+                toggleBlockquote();
                 break;
             case 'code':
-                wrapSelectionWith('`', '`');
+                toggleInlineCode();
                 break;
             case 'codeBlock':
-                insertCodeBlock();
+                toggleCodeBlock();
                 break;
             case 'horizontalRule':
                 document.execCommand('insertHTML', false, '<hr>');
@@ -456,23 +459,77 @@
         notifyContentChanged();
     }
 
-    function wrapSelectionWith(before, after) {
+    function closestElement(node, tag) {
+        const el = node && node.nodeType === 3 ? node.parentElement : node;
+        return el ? el.closest(tag) : null;
+    }
+
+    // Toggle inline code: wrap selection with <code>, or unwrap if already inside <code>
+    function toggleInlineCode() {
         const sel = window.getSelection();
-        if (sel.rangeCount > 0) {
+        if (!sel || sel.rangeCount === 0) return;
+
+        const anchor = sel.anchorNode;
+        const codeEl = closestElement(anchor, 'code');
+        const inPre = codeEl && codeEl.closest('pre');
+
+        if (codeEl && !inPre) {
+            // Already inline code — unwrap
+            const text = codeEl.textContent;
+            const textNode = document.createTextNode(text);
+            codeEl.parentNode.replaceChild(textNode, codeEl);
+            const range = document.createRange();
+            range.selectNode(textNode);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
             const range = sel.getRangeAt(0);
             const text = range.toString();
-            if (text) {
-                document.execCommand('insertHTML', false,
-                    '<code>' + escapeHtml(text) + '</code>');
-            }
+            document.execCommand('insertHTML', false,
+                '<code>' + escapeHtml(text || '\u200B') + '</code>');
         }
     }
 
-    function insertCodeBlock() {
+    // Toggle code block: insert <pre><code>, or convert back to paragraph if already inside <pre>
+    function toggleCodeBlock() {
         const sel = window.getSelection();
-        const text = sel.rangeCount > 0 ? sel.getRangeAt(0).toString() : '';
-        const html = '<pre><code>' + escapeHtml(text || 'code here') + '</code></pre><p><br></p>';
-        document.execCommand('insertHTML', false, html);
+        if (!sel || sel.rangeCount === 0) return;
+
+        const anchor = sel.anchorNode;
+        const preEl = closestElement(anchor, 'pre');
+
+        if (preEl) {
+            // Already in a code block — unwrap to paragraph
+            const text = preEl.textContent;
+            const p = document.createElement('p');
+            p.textContent = text || '\u200B';
+            preEl.parentNode.replaceChild(p, preEl);
+            const range = document.createRange();
+            range.selectNodeContents(p);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
+            const text = sel.getRangeAt(0).toString();
+            const html = '<pre><code>' + escapeHtml(text || 'code') + '</code></pre><p><br></p>';
+            document.execCommand('insertHTML', false, html);
+        }
+    }
+
+    // Toggle blockquote: remove if already in blockquote, otherwise apply
+    function toggleBlockquote() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+
+        const anchor = sel.anchorNode;
+        const bqEl = closestElement(anchor, 'blockquote');
+
+        if (bqEl) {
+            // Already blockquote — convert back to paragraph
+            document.execCommand('formatBlock', false, 'p');
+        } else {
+            document.execCommand('formatBlock', false, 'blockquote');
+        }
     }
 
     function insertImage(path, alt) {

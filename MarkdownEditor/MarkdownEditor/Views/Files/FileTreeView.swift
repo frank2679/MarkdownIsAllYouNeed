@@ -175,6 +175,10 @@ struct FileTreeView: View {
             loadFavorites()
             await loadSyncState(changes: changes)
         }
+        .onAppear {
+            refreshTree()
+            loadFavorites()
+        }
         .sheet(item: $newItemContext) { context in
             NewItemSheet(context: context) { isDir, name, url in
                 createNewItem(name: name, isDirectory: isDir, in: url)
@@ -215,7 +219,9 @@ struct FileTreeView: View {
             case .markdown:
                 MarkdownEditorScreen(
                     fileURL: repo.localPath.appendingPathComponent(selection.path),
-                    fileName: (selection.path as NSString).lastPathComponent
+                    fileName: (selection.path as NSString).lastPathComponent,
+                    repo: repo,
+                    onFileMoved: { refreshTree(); loadFavorites() }
                 )
             case .text:
                 TextFileView(
