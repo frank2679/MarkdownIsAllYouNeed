@@ -182,6 +182,7 @@ enum GitHubError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidResponse: return "Invalid response from GitHub"
+        case .httpError(404): return "GitHub API error (HTTP 404) — token may be missing 'gist' scope"
         case .httpError(let code): return "GitHub API error (HTTP \(code))"
         }
     }
