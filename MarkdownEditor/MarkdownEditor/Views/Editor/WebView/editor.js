@@ -412,19 +412,25 @@
 
         switch (format) {
             case 'bold':
-                document.execCommand('bold', false, null);
+                toggleBold();
                 break;
             case 'italic':
-                document.execCommand('italic', false, null);
+                toggleItalic();
                 break;
             case 'strikethrough':
-                document.execCommand('strikethrough', false, null);
+                toggleStrikethrough();
                 break;
             case 'heading1':
-                document.execCommand('formatBlock', false, 'h1');
+                toggleHeading('h1');
                 break;
             case 'heading2':
-                document.execCommand('formatBlock', false, 'h2');
+                toggleHeading('h2');
+                break;
+            case 'undo':
+                document.execCommand('undo', false, null);
+                break;
+            case 'redo':
+                document.execCommand('redo', false, null);
                 break;
             case 'heading3':
                 document.execCommand('formatBlock', false, 'h3');
@@ -462,6 +468,45 @@
     function closestElement(node, tag) {
         const el = node && node.nodeType === 3 ? node.parentElement : node;
         return el ? el.closest(tag) : null;
+    }
+
+    // Unwrap an inline element, replacing it with its child nodes
+    function unwrapElement(el) {
+        const parent = el.parentNode;
+        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+        parent.removeChild(el);
+    }
+
+    // Toggle bold: unwrap <strong>/<b> if inside one, otherwise execCommand
+    function toggleBold() {
+        const anchor = window.getSelection()?.anchorNode;
+        const el = closestElement(anchor, 'strong') || closestElement(anchor, 'b');
+        el ? unwrapElement(el) : document.execCommand('bold', false, null);
+    }
+
+    // Toggle italic: unwrap <em>/<i> if inside one, otherwise execCommand
+    function toggleItalic() {
+        const anchor = window.getSelection()?.anchorNode;
+        const el = closestElement(anchor, 'em') || closestElement(anchor, 'i');
+        el ? unwrapElement(el) : document.execCommand('italic', false, null);
+    }
+
+    // Toggle strikethrough: unwrap <del>/<s>/<strike> if inside one, otherwise execCommand
+    function toggleStrikethrough() {
+        const anchor = window.getSelection()?.anchorNode;
+        const el = closestElement(anchor, 'del') || closestElement(anchor, 's')
+                 || closestElement(anchor, 'strike');
+        el ? unwrapElement(el) : document.execCommand('strikethrough', false, null);
+    }
+
+    // Toggle heading: remove if already that heading level, otherwise apply
+    function toggleHeading(tag) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const anchor = sel.anchorNode;
+        const el = anchor && anchor.nodeType === 3 ? anchor.parentElement : anchor;
+        document.execCommand('formatBlock', false,
+            (el && el.closest(tag)) ? 'p' : tag);
     }
 
     // Toggle inline code: wrap selection with <code>, or unwrap if already inside <code>

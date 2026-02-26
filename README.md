@@ -2,7 +2,7 @@
 
 > 使用 Markdown 作为你的工作语言，随时随地在 iPhone 上编辑 GitHub 仓库中的 Markdown 文件。
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue)
+![Version](https://img.shields.io/badge/version-0.5.3-blue)
 ![Platform](https://img.shields.io/badge/platform-iOS%2017%2B-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -45,16 +45,21 @@
 
 ## Roadmap
 
-| Version | Milestone | Description |
-|---------|-----------|-------------|
-| 0.1.0 | MVP-0 (Phase 1–4) | End-to-end workflow |
-| **0.2.0** | **MVP-1 (Phase 5–6)** | **Editor enhancements + Git enhancements — current release** |
-| 0.3.0 | MVP-1 (Phase 7) | AI Chat integration |
-| 0.4.0 | MVP-1 (Phase 8) | Polish & refinements |
-| 1.0.0 | App Store | First public release |
-| 2.0.0 | V2 | iPad support |
+| Version | Description |
+|---------|-------------|
+| 0.1.0 | MVP — end-to-end GitHub login → clone → edit → commit → push |
+| 0.2.0 | Editor enhancements, Git diff, file operations |
+| 0.3.0 | New file / folder, rename, delete, unit tests |
+| 0.4.0 | Lazy `.originals/` caching — ~50% storage reduction |
+| 0.5.0 | Notion-style editing UX, favorites, git discard |
+| 0.5.1 | Move To, PDF preview |
+| 0.5.2 | Keyboard toolbar (undo/redo, formatting), font size, share menu |
+| **0.5.3** | **Toggle fix, foreground reload, Share as Gist / Export HTML — current** |
+| 0.6.0 | Android |
+| 1.0.0 | App Store release |
 
-See [DESIGN.md](docs/DESIGN.md) for the full technical design and phased development plan.
+See [DESIGN.md](docs/DESIGN.md) for the full technical design.
+See [User Guide](docs/user-guide.md) for login instructions and usage.
 
 ## Project Structure
 

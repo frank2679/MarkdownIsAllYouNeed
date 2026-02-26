@@ -8,6 +8,11 @@ struct EditorToolbar: View {
         HStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 2) {
+                    toolbarButton(nil, format: "undo", icon: "arrow.uturn.backward")
+                    toolbarButton(nil, format: "redo", icon: "arrow.uturn.forward")
+
+                    Divider().frame(height: 20)
+
                     toolbarButton("H1", format: "heading1", icon: nil)
                     toolbarButton("H2", format: "heading2", icon: nil)
 

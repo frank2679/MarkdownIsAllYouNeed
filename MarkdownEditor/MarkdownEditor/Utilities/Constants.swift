@@ -9,7 +9,7 @@ enum AppConstants {
         Bundle.main.infoDictionary?["GitHubClientSecret"] as? String ?? ""
     }()
     static let githubCallbackURL = "markdowneditor://oauth/callback"
-    static let githubScopes = "repo,user"
+    static let githubScopes = "repo,user,gist"
 
     // MARK: - GitHub API
     static let githubAPIBase = "https://api.github.com"
