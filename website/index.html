@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkdownIsAllYouNeed</title>
+  <meta name="description" content="An AI-native Markdown editor for iOS. Write, sync with Git, and collaborate with AI — your knowledge base, your files, forever." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">
+        <span class="logo-mark">M↓</span>
+        <span class="logo-text">MarkdownIsAllYouNeed</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link nav-link-active" data-i18n="nav_features">Features</a>
+        <a href="guide.html" class="nav-link" data-i18n="nav_guide">Guide</a>
+        <a href="https://github.com/frank2679/MarkdownIsAllYouNeed" class="nav-link nav-link-ext" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <div class="nav-actions">
+        <button class="lang-btn" id="lang-btn" onclick="toggleLang()" aria-label="Switch language">中文</button>
+        <a class="nav-cta" href="#" data-i18n="nav_cta">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge" data-i18n="hero_badge">iOS App · Free</div>
+      <h1 class="hero-title" data-i18n="hero_title">Markdown for<br>the AI Age</h1>
+      <p class="hero-subtitle" data-i18n="hero_subtitle">
+        Write in Markdown. Sync with Git. Collaborate with AI.<br>
+        Your knowledge base — open, portable, and always yours.
+      </p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="#" data-i18n="hero_cta">Download on App Store</a>
+        <a class="btn-secondary" href="guide.html" data-i18n="hero_guide">Read the Guide</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="device-mockup">
+        <div class="device-screen">
+          <div class="mock-editor">
+            <div class="mock-toolbar">
+              <span class="mock-dot red"></span>
+              <span class="mock-dot yellow"></span>
+              <span class="mock-dot green"></span>
+            </div>
+            <div class="mock-content">
+              <div class="mock-line h1"></div>
+              <div class="mock-line medium"></div>
+              <div class="mock-line short"></div>
+              <div class="mock-spacer"></div>
+              <div class="mock-line full"></div>
+              <div class="mock-line long"></div>
+              <div class="mock-line medium"></div>
+              <div class="mock-spacer"></div>
+              <div class="mock-line code full"></div>
+              <div class="mock-line code long"></div>
+              <div class="mock-line code medium"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHILOSOPHY -->
+  <section class="section philosophy">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label" data-i18n="phi_label">Philosophy</span>
+        <h2 class="section-title" data-i18n="phi_title">The Simplest Tools<br>Are the Most Powerful</h2>
+        <p class="section-desc" data-i18n="phi_desc">
+          Markdown is plain text. Git is open protocol. Together, they form the most durable
+          foundation for your ideas — readable by humans and AI alike, now and forever.
+        </p>
+      </div>
+      <div class="phi-grid">
+        <div class="phi-card">
+          <div class="phi-icon">📄</div>
+          <h3 data-i18n="phi_1_title">Plain Text, Forever</h3>
+          <p data-i18n="phi_1_desc">Your notes are standard Markdown files. Open them in any editor, on any device, 10 years from now. No proprietary format, no lock-in.</p>
+        </div>
+        <div class="phi-card">
+          <div class="phi-icon">⑂</div>
+          <h3 data-i18n="phi_2_title">Git as the Protocol</h3>
+          <p data-i18n="phi_2_desc">Sync through GitHub. Every change is versioned, every file has history. The same protocol that powers the world's software powers your knowledge.</p>
+        </div>
+        <div class="phi-card">
+          <div class="phi-icon">✦</div>
+          <h3 data-i18n="phi_3_title">AI as Your Collaborator</h3>
+          <p data-i18n="phi_3_desc">Markdown is the native language of AI. Your files are directly readable and writable by AI — not through a chat interface, but as a true file-level collaborator.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES (currently available) -->
+  <section class="section features">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label" data-i18n="feat_label">Available Now</span>
+        <h2 class="section-title" data-i18n="feat_title">Everything You Need,<br>Nothing You Don't</h2>
+      </div>
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-icon">✍️</div>
+          <h3 data-i18n="feat_1_title">WYSIWYG Editing</h3>
+          <p data-i18n="feat_1_desc">Notion-style editor that renders as you type. Headings, bold, lists, code blocks, tables — formatted beautifully, stored as plain Markdown.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">⑂</div>
+          <h3 data-i18n="feat_2_title">GitHub Sync</h3>
+          <p data-i18n="feat_2_desc">Clone any repo, edit on your phone, push back. Your changes land directly in GitHub — no intermediary, no sync magic.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📂</div>
+          <h3 data-i18n="feat_3_title">File Management</h3>
+          <p data-i18n="feat_3_desc">Browse the full repository tree. Create, rename, move, and delete files and folders — complete file management from iOS.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🔄</div>
+          <h3 data-i18n="feat_4_title">Offline First</h3>
+          <p data-i18n="feat_4_desc">Everything works without internet. Edit and commit locally, sync when you're back online. Your work never waits for a connection.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📋</div>
+          <h3 data-i18n="feat_5_title">Git Operations</h3>
+          <p data-i18n="feat_5_desc">View diffs, commit, push, pull, and discard changes. A real Git client — not a simplified abstraction.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🔗</div>
+          <h3 data-i18n="feat_6_title">Share & Export</h3>
+          <p data-i18n="feat_6_desc">Share as a GitHub link, create a public Gist, or export as PDF and HTML. Multiple ways to get your writing out into the world.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="section roadmap">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label" data-i18n="road_label">Roadmap</span>
+        <h2 class="section-title" data-i18n="road_title">What's Coming</h2>
+        <p class="section-desc" data-i18n="road_desc">Features currently in development. Not yet available in the current release.</p>
+      </div>
+      <div class="road-list">
+
+        <div class="road-item">
+          <div class="road-version">
+            <span class="version-badge version-next">v0.5.4</span>
+            <span class="version-label" data-i18n="road_next">Next Release</span>
+          </div>
+          <div class="road-features">
+            <div class="road-feat">
+              <span class="road-feat-icon">🖼️</span>
+              <div>
+                <strong data-i18n="road_img_title">Images in Markdown</strong>
+                <p data-i18n="road_img_desc">Display images stored in your repository inline. Tap to view full-size with pinch-to-zoom.</p>
+              </div>
+            </div>
+            <div class="road-feat">
+              <span class="road-feat-icon">🔗</span>
+              <div>
+                <strong data-i18n="road_url_title">Tappable Links</strong>
+                <p data-i18n="road_url_desc">URLs in your documents are automatically detected and tappable — open in browser without leaving the app.</p>
+              </div>
+            </div>
+            <div class="road-feat">
+              <span class="road-feat-icon">Aa</span>
+              <div>
+                <strong data-i18n="road_font_title">Heading Font Scaling</strong>
+                <p data-i18n="road_font_desc">Headings will scale proportionally with your chosen font size setting.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="road-item">
+          <div class="road-version">
+            <span class="version-badge version-future">v0.6.0</span>
+            <span class="version-label" data-i18n="road_future">In Development</span>
+          </div>
+          <div class="road-features">
+            <div class="road-feat">
+              <span class="road-feat-icon">✦</span>
+              <div>
+                <strong data-i18n="road_ai_title">AI Collaboration</strong>
+                <p data-i18n="road_ai_desc">An AI that reads and writes your actual files — working directly in your knowledge base like a collaborator, not a chatbot. Bring your own API key (OpenAI, Anthropic, or compatible).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <section class="cta-band">
+    <div class="cta-band-inner">
+      <h2 data-i18n="cta_title">Your knowledge base,<br>built on open standards.</h2>
+      <p data-i18n="cta_subtitle">Available for iOS. Free to try.</p>
+      <div class="cta-band-actions">
+        <a class="btn-primary btn-large btn-inverted" href="#" data-i18n="cta_btn">Download on App Store</a>
+        <a class="btn-secondary btn-large btn-inverted-secondary" href="guide.html" data-i18n="cta_guide">Read the Guide</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <span class="logo-mark">M↓</span>
+        <span class="footer-copy" data-i18n="footer_copy">© 2026 MarkdownIsAllYouNeed</span>
+      </div>
+      <div class="footer-right">
+        <a href="guide.html" data-i18n="footer_guide">Guide</a>
+        <a href="https://github.com/frank2679/MarkdownIsAllYouNeed" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const i18n = {
+      en: {
+        nav_features: "Features", nav_guide: "Guide", nav_cta: "Download",
+        hero_badge: "iOS App · Free",
+        hero_title: "Markdown for<br>the AI Age",
+        hero_subtitle: "Write in Markdown. Sync with Git. Collaborate with AI.<br>Your knowledge base — open, portable, and always yours.",
+        hero_cta: "Download on App Store", hero_guide: "Read the Guide",
+
+        phi_label: "Philosophy",
+        phi_title: "The Simplest Tools<br>Are the Most Powerful",
+        phi_desc: "Markdown is plain text. Git is open protocol. Together, they form the most durable foundation for your ideas — readable by humans and AI alike, now and forever.",
+        phi_1_title: "Plain Text, Forever",
+        phi_1_desc: "Your notes are standard Markdown files. Open them in any editor, on any device, 10 years from now. No proprietary format, no lock-in.",
+        phi_2_title: "Git as the Protocol",
+        phi_2_desc: "Sync through GitHub. Every change is versioned, every file has history. The same protocol that powers the world's software powers your knowledge.",
+        phi_3_title: "AI as Your Collaborator",
+        phi_3_desc: "Markdown is the native language of AI. Your files are directly readable and writable by AI — not through a chat interface, but as a true file-level collaborator.",
+
+        feat_label: "Available Now", feat_title: "Everything You Need,<br>Nothing You Don't",
+        feat_1_title: "WYSIWYG Editing",
+        feat_1_desc: "Notion-style editor that renders as you type. Headings, bold, lists, code blocks, tables — formatted beautifully, stored as plain Markdown.",
+        feat_2_title: "GitHub Sync",
+        feat_2_desc: "Clone any repo, edit on your phone, push back. Your changes land directly in GitHub — no intermediary, no sync magic.",
+        feat_3_title: "File Management",
+        feat_3_desc: "Browse the full repository tree. Create, rename, move, and delete files and folders — complete file management from iOS.",
+        feat_4_title: "Offline First",
+        feat_4_desc: "Everything works without internet. Edit and commit locally, sync when you're back online. Your work never waits for a connection.",
+        feat_5_title: "Git Operations",
+        feat_5_desc: "View diffs, commit, push, pull, and discard changes. A real Git client — not a simplified abstraction.",
+        feat_6_title: "Share & Export",
+        feat_6_desc: "Share as a GitHub link, create a public Gist, or export as PDF and HTML. Multiple ways to get your writing out into the world.",
+
+        road_label: "Roadmap", road_title: "What's Coming",
+        road_desc: "Features currently in development. Not yet available in the current release.",
+        road_next: "Next Release", road_future: "In Development",
+        road_img_title: "Images in Markdown",
+        road_img_desc: "Display images stored in your repository inline. Tap to view full-size with pinch-to-zoom.",
+        road_url_title: "Tappable Links",
+        road_url_desc: "URLs in your documents are automatically detected and tappable — open in browser without leaving the app.",
+        road_font_title: "Heading Font Scaling",
+        road_font_desc: "Headings will scale proportionally with your chosen font size setting.",
+        road_ai_title: "AI Collaboration",
+        road_ai_desc: "An AI that reads and writes your actual files — working directly in your knowledge base like a collaborator, not a chatbot. Bring your own API key (OpenAI, Anthropic, or compatible).",
+
+        cta_title: "Your knowledge base,<br>built on open standards.",
+        cta_subtitle: "Available for iOS. Free to try.",
+        cta_btn: "Download on App Store", cta_guide: "Read the Guide",
+
+        footer_copy: "© 2026 MarkdownIsAllYouNeed", footer_guide: "Guide",
+      },
+      zh: {
+        nav_features: "功能", nav_guide: "使用教程", nav_cta: "下载",
+        hero_badge: "iOS 应用 · 免费",
+        hero_title: "AI 时代的<br>Markdown",
+        hero_subtitle: "用 Markdown 书写，用 Git 同步，与 AI 协作。<br>你的知识库——开放、可迁移，永远属于你。",
+        hero_cta: "App Store 下载", hero_guide: "查看使用教程",
+
+        phi_label: "产品理念",
+        phi_title: "大道至简",
+        phi_desc: "Markdown 是纯文本，Git 是开放协议。两者共同构成你想法最坚固的基础——人可读，AI 可读，现在可读，十年后依然可读。",
+        phi_1_title: "纯文本，永久可用",
+        phi_1_desc: "你的笔记是标准的 Markdown 文件。任何编辑器、任何设备、十年后都能打开。没有私有格式，没有平台锁定。",
+        phi_2_title: "Git 作为协议",
+        phi_2_desc: "通过 GitHub 同步。每次改动都有版本，每个文件都有历史。驱动全球软件的协议，同样驱动你的知识库。",
+        phi_3_title: "AI 作为协作者",
+        phi_3_desc: "Markdown 是 AI 的母语。你的文件可以被 AI 直接读写——不是 chatbot，而是真正在文件层面与你协作的助手。",
+
+        feat_label: "当前可用", feat_title: "该有的都有，<br>不该有的都没有",
+        feat_1_title: "所见即所得编辑",
+        feat_1_desc: "类 Notion 的编辑体验，实时渲染。标题、加粗、列表、代码块、表格——格式美观，存储为纯 Markdown。",
+        feat_2_title: "GitHub 同步",
+        feat_2_desc: "Clone 任意仓库，在手机上编辑，推送回 GitHub。改动直接落在 GitHub——没有中间层，没有神秘的同步机制。",
+        feat_3_title: "文件管理",
+        feat_3_desc: "浏览完整的仓库文件树。新建、重命名、移动、删除文件和文件夹——在 iOS 上完整管理仓库。",
+        feat_4_title: "离线优先",
+        feat_4_desc: "无网络也能正常工作。本地编辑和提交，联网后再同步。你的工作不依赖网络连接。",
+        feat_5_title: "Git 操作",
+        feat_5_desc: "查看 diff、提交、推送、拉取、丢弃改动。真正的 Git 客户端，不是简化版。",
+        feat_6_title: "分享与导出",
+        feat_6_desc: "分享 GitHub 文件链接、创建公开 Gist、或导出为 PDF 和 HTML。多种方式把你的内容发布出去。",
+
+        road_label: "路线图", road_title: "即将推出",
+        road_desc: "正在开发中的功能，当前版本尚未支持。",
+        road_next: "下一个版本", road_future: "开发中",
+        road_img_title: "Markdown 图片显示",
+        road_img_desc: "在文档中内联显示仓库中的图片。点击可查看全尺寸，支持双指缩放。",
+        road_url_title: "链接可点击",
+        road_url_desc: "文档中的 URL 自动识别为可点击链接——无需离开 App 即可在浏览器中打开。",
+        road_font_title: "标题字体跟随设置",
+        road_font_desc: "标题字号将随字体大小设置等比缩放。",
+        road_ai_title: "AI 协作",
+        road_ai_desc: "AI 直接读写你的文件——不是 chatbot，而是像同事一样直接在你的知识库中工作。支持自带 API Key（OpenAI、Anthropic 或兼容接口）。",
+
+        cta_title: "基于开放标准，<br>构建你的知识基础设施。",
+        cta_subtitle: "iOS 可用，免费体验。",
+        cta_btn: "App Store 下载", cta_guide: "查看使用教程",
+
+        footer_copy: "© 2026 MarkdownIsAllYouNeed", footer_guide: "使用教程",
+      }
+    };
+
+    let currentLang = 'en';
+    function applyLang(lang) {
+      const dict = i18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (dict[key] !== undefined) el.innerHTML = dict[key];
+      });
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.getElementById('lang-btn').textContent = lang === 'en' ? '中文' : 'English';
+    }
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'zh' : 'en';
+      applyLang(currentLang);
+    }
+  </script>
+</body>
+</html>

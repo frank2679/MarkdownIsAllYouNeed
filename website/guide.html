@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guide — MarkdownIsAllYouNeed</title>
+  <meta name="description" content="User guide for MarkdownIsAllYouNeed — learn how to edit Markdown, sync with GitHub, and manage your files." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="lang-en">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">
+        <span class="logo-mark">M↓</span>
+        <span class="logo-text">MarkdownIsAllYouNeed</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link" data-i18n="nav_features">Features</a>
+        <a href="guide.html" class="nav-link nav-link-active" data-i18n="nav_guide">Guide</a>
+        <a href="https://github.com/frank2679/MarkdownIsAllYouNeed" class="nav-link nav-link-ext" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <div class="nav-actions">
+        <button class="lang-btn" id="lang-btn" onclick="toggleLang()" aria-label="Switch language">中文</button>
+        <a class="nav-cta" href="#" data-i18n="nav_cta">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- GUIDE LAYOUT -->
+  <div class="guide-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="guide-sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <span class="sidebar-section-title en-only">Get Started</span>
+          <span class="sidebar-section-title zh-only">快速上手</span>
+          <a href="#quick-start" class="sidebar-link">
+            <span class="en-only">Quick Start</span>
+            <span class="zh-only">三步开始</span>
+          </a>
+          <a href="#login" class="sidebar-link">
+            <span class="en-only">Login</span>
+            <span class="zh-only">登录</span>
+          </a>
+          <a href="#repository" class="sidebar-link">
+            <span class="en-only">Repositories</span>
+            <span class="zh-only">仓库管理</span>
+          </a>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-section-title en-only">Editing</span>
+          <span class="sidebar-section-title zh-only">编辑</span>
+          <a href="#editor" class="sidebar-link">
+            <span class="en-only">Editor Basics</span>
+            <span class="zh-only">编辑器基础</span>
+          </a>
+          <a href="#toolbar" class="sidebar-link">
+            <span class="en-only">Format Toolbar</span>
+            <span class="zh-only">格式工具栏</span>
+          </a>
+          <a href="#font-size" class="sidebar-link">
+            <span class="en-only">Font Size</span>
+            <span class="zh-only">字体大小</span>
+          </a>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-section-title en-only">Files & Git</span>
+          <span class="sidebar-section-title zh-only">文件与 Git</span>
+          <a href="#files" class="sidebar-link">
+            <span class="en-only">File Management</span>
+            <span class="zh-only">文件管理</span>
+          </a>
+          <a href="#git" class="sidebar-link">
+            <span class="en-only">Git Operations</span>
+            <span class="zh-only">Git 操作</span>
+          </a>
+          <a href="#share" class="sidebar-link">
+            <span class="en-only">Share & Export</span>
+            <span class="zh-only">分享与导出</span>
+          </a>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-section-title en-only">Help</span>
+          <span class="sidebar-section-title zh-only">帮助</span>
+          <a href="#faq" class="sidebar-link">FAQ</a>
+          <a href="#coming-soon" class="sidebar-link">
+            <span class="en-only">Coming Soon</span>
+            <span class="zh-only">即将推出</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="guide-content">
+
+      <!-- QUICK START -->
+      <section class="guide-section" id="quick-start">
+        <div class="en-only">
+          <h1 class="guide-h1">User Guide</h1>
+          <p class="guide-lead">Get up and running in three steps.</p>
+          <div class="steps">
+            <div class="step"><span class="step-num">1</span><div><strong>Login with GitHub</strong> — OAuth or Personal Access Token</div></div>
+            <div class="step"><span class="step-num">2</span><div><strong>Clone a repository</strong> — tap any repo to download it locally</div></div>
+            <div class="step"><span class="step-num">3</span><div><strong>Open a Markdown file</strong> — tap to edit, dismiss keyboard to save</div></div>
+          </div>
+        </div>
+        <div class="zh-only">
+          <h1 class="guide-h1">使用教程</h1>
+          <p class="guide-lead">三步开始使用。</p>
+          <div class="steps">
+            <div class="step"><span class="step-num">1</span><div><strong>用 GitHub 账号登录</strong> — OAuth 授权或个人访问令牌（PAT）</div></div>
+            <div class="step"><span class="step-num">2</span><div><strong>克隆一个仓库</strong> — 点击任意仓库将文件下载到本地</div></div>
+            <div class="step"><span class="step-num">3</span><div><strong>打开 Markdown 文件</strong> — 点击进入编辑，收起键盘即保存</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGIN -->
+      <section class="guide-section" id="login">
+        <div class="en-only">
+          <h2 class="guide-h2">Login</h2>
+          <p>Two ways to authenticate with GitHub:</p>
+
+          <h3 class="guide-h3">OAuth Login <span class="badge-recommended">Recommended</span></h3>
+          <p>Authorize through Safari — no token creation needed.</p>
+          <ol class="guide-ol">
+            <li>Open the app and tap <strong>Login with GitHub</strong></li>
+            <li>Safari opens GitHub's authorization page</li>
+            <li>Sign in and tap <strong>Authorize</strong></li>
+            <li>You're returned to the app automatically</li>
+          </ol>
+          <div class="notice notice-info">
+            <strong>Required permissions:</strong> <code>repo</code> (read/write repositories), <code>user</code> (profile info), <code>gist</code> (share as Gist). If you logged in before the <em>Share as Gist</em> feature existed, sign out and log in again to grant the gist scope.
+          </div>
+
+          <h3 class="guide-h3">PAT Login (Personal Access Token)</h3>
+          <p>For users who prefer manual token management.</p>
+          <ol class="guide-ol">
+            <li>On GitHub: <strong>Settings → Developer settings → Personal access tokens → Tokens (classic)</strong></li>
+            <li>Generate a new token with <code>repo</code>, <code>gist</code>, and <code>read:user</code> scopes</li>
+            <li>Copy the token (it won't be shown again)</li>
+            <li>In the app: tap <strong>Login with PAT</strong> and paste the token</li>
+          </ol>
+          <div class="notice notice-info">
+            Tokens are stored encrypted in iOS Keychain — never in plain text.
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">登录</h2>
+          <p>两种方式通过 GitHub 认证：</p>
+
+          <h3 class="guide-h3">OAuth 登录 <span class="badge-recommended">推荐</span></h3>
+          <p>通过 Safari 授权，无需手动创建 Token。</p>
+          <ol class="guide-ol">
+            <li>打开 App，点击 <strong>Login with GitHub</strong></li>
+            <li>系统弹出 Safari 视图，跳转至 GitHub 授权页</li>
+            <li>用 GitHub 账号登录，点击 <strong>Authorize</strong></li>
+            <li>自动返回 App，完成登录</li>
+          </ol>
+          <div class="notice notice-info">
+            <strong>所需权限：</strong><code>repo</code>（仓库读写）、<code>user</code>（用户信息）、<code>gist</code>（创建 Gist）。若你之前已登录但未包含 gist 权限，请退出后重新授权。
+          </div>
+
+          <h3 class="guide-h3">PAT 登录（个人访问令牌）</h3>
+          <p>适合希望手动管理 Token 的用户。</p>
+          <ol class="guide-ol">
+            <li>在 GitHub：<strong>Settings → Developer settings → Personal access tokens → Tokens (classic)</strong></li>
+            <li>生成新 Token，勾选 <code>repo</code>、<code>gist</code>、<code>read:user</code> 权限</li>
+            <li>复制 Token（离开页面后无法再次查看）</li>
+            <li>在 App 中点击 <strong>Login with PAT</strong>，粘贴 Token</li>
+          </ol>
+          <div class="notice notice-info">
+            Token 加密保存在 iOS Keychain 中，不会明文存储。
+          </div>
+        </div>
+      </section>
+
+      <!-- REPOSITORY -->
+      <section class="guide-section" id="repository">
+        <div class="en-only">
+          <h2 class="guide-h2">Repositories</h2>
+          <h3 class="guide-h3">Clone a Repository</h3>
+          <p>After login, your GitHub repositories are listed. Tap any repo and select <strong>Clone</strong> to download it to your device. Large repositories may take a moment on cellular — Wi-Fi is recommended.</p>
+          <h3 class="guide-h3">Pull Latest Changes</h3>
+          <p>Open the Git panel (bottom tab) and tap <strong>Pull</strong> to fetch the latest commits from GitHub.</p>
+          <h3 class="guide-h3">Favorites & Recent</h3>
+          <p>Mark frequently used files as favorites from the <strong>···</strong> menu in the editor. Access favorites and recent files from the top of the file tree.</p>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">仓库管理</h2>
+          <h3 class="guide-h3">克隆仓库</h3>
+          <p>登录后可看到你的 GitHub 仓库列表。点击任意仓库，选择 <strong>Clone</strong> 将文件下载到设备本地。大型仓库在移动网络下可能较慢，建议在 Wi-Fi 环境下操作。</p>
+          <h3 class="guide-h3">拉取最新改动</h3>
+          <p>打开 Git 面板（底部标签），点击 <strong>Pull</strong> 拉取 GitHub 上的最新提交。</p>
+          <h3 class="guide-h3">收藏与最近文件</h3>
+          <p>在编辑器的 <strong>···</strong> 菜单中，可将常用文件标记为收藏。文件树顶部可快速访问收藏和最近编辑的文件。</p>
+        </div>
+      </section>
+
+      <!-- EDITOR -->
+      <section class="guide-section" id="editor">
+        <div class="en-only">
+          <h2 class="guide-h2">Editor Basics</h2>
+          <p>The editor has two modes:</p>
+          <div class="mode-cards">
+            <div class="mode-card">
+              <strong>Preview Mode</strong>
+              <p>The default view when opening a file. Markdown is rendered with full formatting. Tap anywhere in the document to switch to editing.</p>
+            </div>
+            <div class="mode-card">
+              <strong>Edit Mode</strong>
+              <p>WYSIWYG editing — formatting renders as you type. The keyboard toolbar appears above the keyboard. Dismiss the keyboard (tap the ⌨️ button or swipe down) to save and return to Preview.</p>
+            </div>
+          </div>
+          <div class="notice notice-tip">
+            <strong>Auto-save:</strong> Changes are saved locally every time you dismiss the keyboard. Nothing is lost if you switch apps.
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">编辑器基础</h2>
+          <p>编辑器有两种模式：</p>
+          <div class="mode-cards">
+            <div class="mode-card">
+              <strong>预览模式</strong>
+              <p>打开文件后的默认视图。Markdown 渲染为完整格式。点击文档任意位置切换到编辑模式。</p>
+            </div>
+            <div class="mode-card">
+              <strong>编辑模式</strong>
+              <p>所见即所得——边输入边渲染格式。键盘上方出现格式工具栏。点击收起键盘按钮（⌨️）或向下滑动关闭键盘，自动保存并返回预览。</p>
+            </div>
+          </div>
+          <div class="notice notice-tip">
+            <strong>自动保存：</strong>每次收起键盘时自动保存到本地。切换 App 不会丢失内容。
+          </div>
+        </div>
+      </section>
+
+      <!-- TOOLBAR -->
+      <section class="guide-section" id="toolbar">
+        <div class="en-only">
+          <h2 class="guide-h2">Format Toolbar</h2>
+          <p>The toolbar appears above the keyboard in Edit Mode.</p>
+          <table class="guide-table">
+            <thead><tr><th>Button</th><th>Action</th><th>Toggle Off</th></tr></thead>
+            <tbody>
+              <tr><td>↩ / ↪</td><td>Undo / Redo</td><td>—</td></tr>
+              <tr><td><strong>H1</strong></td><td>Heading 1</td><td>Tap again</td></tr>
+              <tr><td><strong>H2</strong></td><td>Heading 2</td><td>Tap again</td></tr>
+              <tr><td><strong>B</strong></td><td>Bold</td><td>Tap again</td></tr>
+              <tr><td><em>I</em></td><td>Italic</td><td>Tap again</td></tr>
+              <tr><td><s>S</s></td><td>Strikethrough</td><td>Tap again</td></tr>
+              <tr><td>• List</td><td>Bullet list</td><td>Tap again</td></tr>
+              <tr><td>1. List</td><td>Ordered list</td><td>Tap again</td></tr>
+              <tr><td>☑</td><td>Task list</td><td>Tap again</td></tr>
+              <tr><td><code>&lt;/&gt;</code></td><td>Code block</td><td>Tap again</td></tr>
+              <tr><td>"</td><td>Blockquote</td><td>Tap again</td></tr>
+              <tr><td>—</td><td>Horizontal rule</td><td>—</td></tr>
+              <tr><td>🔗</td><td>Insert link</td><td>—</td></tr>
+              <tr><td>⌨️</td><td>Dismiss keyboard</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">格式工具栏</h2>
+          <p>编辑模式下键盘上方显示格式工具栏。</p>
+          <table class="guide-table">
+            <thead><tr><th>按钮</th><th>操作</th><th>取消</th></tr></thead>
+            <tbody>
+              <tr><td>↩ / ↪</td><td>撤销 / 重做</td><td>—</td></tr>
+              <tr><td><strong>H1</strong></td><td>一级标题</td><td>再次点击</td></tr>
+              <tr><td><strong>H2</strong></td><td>二级标题</td><td>再次点击</td></tr>
+              <tr><td><strong>B</strong></td><td>加粗</td><td>再次点击</td></tr>
+              <tr><td><em>I</em></td><td>斜体</td><td>再次点击</td></tr>
+              <tr><td><s>S</s></td><td>删除线</td><td>再次点击</td></tr>
+              <tr><td>• 列表</td><td>无序列表</td><td>再次点击</td></tr>
+              <tr><td>1. 列表</td><td>有序列表</td><td>再次点击</td></tr>
+              <tr><td>☑</td><td>任务列表</td><td>再次点击</td></tr>
+              <tr><td><code>&lt;/&gt;</code></td><td>代码块</td><td>再次点击</td></tr>
+              <tr><td>"</td><td>引用块</td><td>再次点击</td></tr>
+              <tr><td>—</td><td>分割线</td><td>—</td></tr>
+              <tr><td>🔗</td><td>插入链接</td><td>—</td></tr>
+              <tr><td>⌨️</td><td>收起键盘</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FONT SIZE -->
+      <section class="guide-section" id="font-size">
+        <div class="en-only">
+          <h2 class="guide-h2">Font Size</h2>
+          <p>Tap the <strong>Aa</strong> button in the editor's <strong>···</strong> menu to cycle through five sizes:</p>
+          <div class="size-demo">
+            <span style="font-size:12px">XS</span>
+            <span style="font-size:14px">S</span>
+            <span style="font-size:16px">M</span>
+            <span style="font-size:18px">L</span>
+            <span style="font-size:20px">XL</span>
+          </div>
+          <p>Your preference is saved and applies across all documents.</p>
+          <div class="notice notice-upcoming">
+            <strong>Coming in v0.5.4:</strong> Heading sizes (H1, H2…) will scale proportionally with your chosen font size. Currently, headings use a fixed size regardless of this setting.
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">字体大小</h2>
+          <p>在编辑器 <strong>···</strong> 菜单中点击 <strong>Aa</strong>，可在五档字号间切换：</p>
+          <div class="size-demo">
+            <span style="font-size:12px">XS</span>
+            <span style="font-size:14px">S</span>
+            <span style="font-size:16px">M</span>
+            <span style="font-size:18px">L</span>
+            <span style="font-size:20px">XL</span>
+          </div>
+          <p>设置全局保存，对所有文档生效。</p>
+          <div class="notice notice-upcoming">
+            <strong>v0.5.4 即将支持：</strong>标题字号（H1、H2 等）将随字体大小设置等比缩放。当前版本标题使用固定字号，不受此设置影响。
+          </div>
+        </div>
+      </section>
+
+      <!-- FILE MANAGEMENT -->
+      <section class="guide-section" id="files">
+        <div class="en-only">
+          <h2 class="guide-h2">File Management</h2>
+          <p>Long-press any file or folder in the file tree to open the context menu:</p>
+          <table class="guide-table">
+            <thead><tr><th>Action</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>New File</td><td>Create a new Markdown or text file in the current folder</td></tr>
+              <tr><td>New Folder</td><td>Create a subfolder</td></tr>
+              <tr><td>Rename</td><td>Rename file or folder</td></tr>
+              <tr><td>Move To</td><td>Move to another folder in the same repository</td></tr>
+              <tr><td>Delete</td><td>Delete the file (requires confirmation)</td></tr>
+              <tr><td>Favorite</td><td>Add to / remove from favorites</td></tr>
+            </tbody>
+          </table>
+          <div class="notice notice-upcoming">
+            <strong>Not yet supported:</strong> Images in Markdown documents are not yet rendered inline. You can store image files in the repository, but they won't display in the editor. This is coming in <strong>v0.5.4</strong>.
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">文件管理</h2>
+          <p>在文件树中长按任意文件或文件夹，打开上下文菜单：</p>
+          <table class="guide-table">
+            <thead><tr><th>操作</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>新建文件</td><td>在当前文件夹中创建新的 Markdown 或文本文件</td></tr>
+              <tr><td>新建文件夹</td><td>创建子文件夹</td></tr>
+              <tr><td>重命名</td><td>重命名文件或文件夹</td></tr>
+              <tr><td>移动到</td><td>移动到同一仓库的其他文件夹</td></tr>
+              <tr><td>删除</td><td>删除文件（需二次确认）</td></tr>
+              <tr><td>收藏</td><td>添加或取消收藏</td></tr>
+            </tbody>
+          </table>
+          <div class="notice notice-upcoming">
+            <strong>尚未支持：</strong>Markdown 文档中的图片目前不能内联显示。你可以将图片文件存储在仓库中，但编辑器中不会渲染。此功能将在 <strong>v0.5.4</strong> 中支持。
+          </div>
+        </div>
+      </section>
+
+      <!-- GIT OPERATIONS -->
+      <section class="guide-section" id="git">
+        <div class="en-only">
+          <h2 class="guide-h2">Git Operations</h2>
+
+          <h3 class="guide-h3">Commit & Push</h3>
+          <ol class="guide-ol">
+            <li>Open the <strong>Git panel</strong> (bottom tab bar)</li>
+            <li>Changed files are listed with their status (modified / new / deleted)</li>
+            <li>Write a commit message and tap <strong>Commit &amp; Push</strong></li>
+          </ol>
+
+          <h3 class="guide-h3">View Diff</h3>
+          <p>Tap any changed file in the Git panel to see a line-by-line diff of your changes.</p>
+
+          <h3 class="guide-h3">Discard Changes</h3>
+          <p>Swipe left on a changed file, or use the context menu, to discard changes and revert to the last committed version.</p>
+
+          <h3 class="guide-h3">Pull</h3>
+          <p>Tap <strong>Pull</strong> in the Git panel to fetch the latest commits from GitHub and merge them locally.</p>
+
+          <h3 class="guide-h3">Conflict Handling</h3>
+          <p>If a push fails because the remote has new commits, you'll be prompted to pull first. After pulling, if there are conflicts, the conflicting files will be highlighted. Resolve conflicts in the editor, then commit.</p>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">Git 操作</h2>
+
+          <h3 class="guide-h3">提交与推送</h3>
+          <ol class="guide-ol">
+            <li>打开底部标签栏的 <strong>Git 面板</strong></li>
+            <li>查看已修改文件列表（修改 / 新增 / 删除）</li>
+            <li>填写 commit 信息，点击 <strong>Commit &amp; Push</strong></li>
+          </ol>
+
+          <h3 class="guide-h3">查看 Diff</h3>
+          <p>点击 Git 面板中任意已修改的文件，可查看逐行 diff。</p>
+
+          <h3 class="guide-h3">丢弃改动</h3>
+          <p>在 Git 面板中向左滑动某个文件，或通过上下文菜单，选择丢弃改动，恢复到上一次提交的版本。</p>
+
+          <h3 class="guide-h3">拉取</h3>
+          <p>在 Git 面板点击 <strong>Pull</strong>，拉取 GitHub 上的最新提交并合并到本地。</p>
+
+          <h3 class="guide-h3">冲突处理</h3>
+          <p>如果推送失败（远端有新提交），App 会提示你先拉取。拉取后如有冲突，相关文件会被高亮标注。在编辑器中解决冲突后，重新提交即可。</p>
+        </div>
+      </section>
+
+      <!-- SHARE -->
+      <section class="guide-section" id="share">
+        <div class="en-only">
+          <h2 class="guide-h2">Share &amp; Export</h2>
+          <p>Tap <strong>···</strong> in the editor's top-right corner:</p>
+          <table class="guide-table">
+            <thead><tr><th>Option</th><th>Description</th><th>Requirement</th></tr></thead>
+            <tbody>
+              <tr><td>Share Link</td><td>Share the GitHub URL of the file</td><td>Public repository</td></tr>
+              <tr><td>Share as Gist</td><td>Create a public Gist and share its link</td><td>Token needs <code>gist</code> scope</td></tr>
+              <tr><td>Export HTML</td><td>Export the rendered HTML of the document</td><td>—</td></tr>
+              <tr><td>Export PDF</td><td>Export as a PDF file</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="notice notice-upcoming">
+            <strong>Not yet supported:</strong> URL links in document text are not yet tappable. This is coming in <strong>v0.5.4</strong>.
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">分享与导出</h2>
+          <p>点击编辑器右上角 <strong>···</strong> 菜单：</p>
+          <table class="guide-table">
+            <thead><tr><th>选项</th><th>说明</th><th>前提条件</th></tr></thead>
+            <tbody>
+              <tr><td>分享链接</td><td>分享该文件的 GitHub URL</td><td>公开仓库</td></tr>
+              <tr><td>分享为 Gist</td><td>创建公开 Gist 并分享链接</td><td>Token 需包含 <code>gist</code> 权限</td></tr>
+              <tr><td>导出 HTML</td><td>导出文档的渲染 HTML 文件</td><td>—</td></tr>
+              <tr><td>导出 PDF</td><td>导出为 PDF 文件</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="notice notice-upcoming">
+            <strong>尚未支持：</strong>文档正文中的 URL 链接目前不可点击。此功能将在 <strong>v0.5.4</strong> 中支持。
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="guide-section" id="faq">
+        <div class="en-only">
+          <h2 class="guide-h2">FAQ</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>"Share as Gist" shows error: token may be missing 'gist' scope</summary>
+              <p>Your token doesn't have the <code>gist</code> permission. OAuth users: sign out and log in again. PAT users: generate a new token with the <code>gist</code> scope on GitHub.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Clone is very slow or fails</summary>
+              <p>Clone downloads files one by one via GitHub API. Large repositories can take time — use Wi-Fi if possible.</p>
+            </details>
+            <details class="faq-item">
+              <summary>The editor is blank when I return to the app</summary>
+              <p>iOS may terminate the WebView process when the app is in the background for a long time. The app detects this and automatically reloads your content — no action needed, nothing is lost.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Discard doesn't work after a merge conflict</summary>
+              <p>This is a known issue being fixed in <strong>v0.5.4</strong>. As a workaround, close and reopen the app, then try discard again.</p>
+            </details>
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">常见问题</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>"Share as Gist" 提示：token may be missing 'gist' scope</summary>
+              <p>你的 Token 缺少 <code>gist</code> 权限。OAuth 用户：退出登录后重新授权。PAT 用户：在 GitHub 上重新生成包含 <code>gist</code> 权限的 Token 并重新登录。</p>
+            </details>
+            <details class="faq-item">
+              <summary>Clone 非常慢或失败</summary>
+              <p>Clone 通过 GitHub API 逐文件下载，大型仓库耗时较长。建议在 Wi-Fi 环境下操作。</p>
+            </details>
+            <details class="faq-item">
+              <summary>返回 App 后编辑区空白</summary>
+              <p>iOS 可能在长时间后台后终止 WebView 进程。App 会自动检测并重新加载内容，无需手动操作，内容不会丢失。</p>
+            </details>
+            <details class="faq-item">
+              <summary>发生 Git 冲突后 Discard 无效</summary>
+              <p>这是一个已知问题，将在 <strong>v0.5.4</strong> 中修复。临时解决方法：关闭并重新打开 App 后再尝试 Discard。</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMING SOON -->
+      <section class="guide-section" id="coming-soon">
+        <div class="en-only">
+          <h2 class="guide-h2">Coming Soon</h2>
+          <p>Features not yet available in the current release:</p>
+          <div class="road-list road-list-compact">
+            <div class="road-item">
+              <div class="road-version">
+                <span class="version-badge version-next">v0.5.4</span>
+                <span class="version-label">Next Release</span>
+              </div>
+              <div class="road-features">
+                <div class="road-feat"><span class="road-feat-icon">🖼️</span><div><strong>Images in Markdown</strong> — inline display with pinch-to-zoom</div></div>
+                <div class="road-feat"><span class="road-feat-icon">🔗</span><div><strong>Tappable links</strong> — URLs auto-detected and openable</div></div>
+                <div class="road-feat"><span class="road-feat-icon">Aa</span><div><strong>Heading font scaling</strong> — headings scale with font size setting</div></div>
+                <div class="road-feat"><span class="road-feat-icon">🛠</span><div><strong>Discard after conflict</strong> — fix for discard not working after a merge conflict</div></div>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-version">
+                <span class="version-badge version-future">v0.6.0</span>
+                <span class="version-label">In Development</span>
+              </div>
+              <div class="road-features">
+                <div class="road-feat"><span class="road-feat-icon">✦</span><div><strong>AI Collaboration</strong> — AI reads and writes your files directly. Bring your own API key.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zh-only">
+          <h2 class="guide-h2">即将推出</h2>
+          <p>当前版本尚不支持的功能：</p>
+          <div class="road-list road-list-compact">
+            <div class="road-item">
+              <div class="road-version">
+                <span class="version-badge version-next">v0.5.4</span>
+                <span class="version-label">下一个版本</span>
+              </div>
+              <div class="road-features">
+                <div class="road-feat"><span class="road-feat-icon">🖼️</span><div><strong>Markdown 图片显示</strong> — 内联显示，支持双指缩放</div></div>
+                <div class="road-feat"><span class="road-feat-icon">🔗</span><div><strong>链接可点击</strong> — URL 自动识别并可在浏览器中打开</div></div>
+                <div class="road-feat"><span class="road-feat-icon">Aa</span><div><strong>标题字体跟随设置</strong> — 标题随字体大小等比缩放</div></div>
+                <div class="road-feat"><span class="road-feat-icon">🛠</span><div><strong>冲突后 Discard 修复</strong> — 修复 git 冲突后 Discard 失效的问题</div></div>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-version">
+                <span class="version-badge version-future">v0.6.0</span>
+                <span class="version-label">开发中</span>
+              </div>
+              <div class="road-features">
+                <div class="road-feat"><span class="road-feat-icon">✦</span><div><strong>AI 协作</strong> — AI 直接读写你的文件。支持自带 API Key。</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <span class="logo-mark">M↓</span>
+        <span class="footer-copy">© 2026 MarkdownIsAllYouNeed</span>
+      </div>
+      <div class="footer-right">
+        <a href="index.html" data-i18n="footer_features">Features</a>
+        <a href="https://github.com/frank2679/MarkdownIsAllYouNeed" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Guide page: use CSS class toggle for complex bilingual content
+    const navI18n = {
+      en: { nav_features: "Features", nav_guide: "Guide", nav_cta: "Download", footer_features: "Features" },
+      zh: { nav_features: "功能", nav_guide: "使用教程", nav_cta: "下载", footer_features: "功能特性" }
+    };
+
+    let currentLang = 'en';
+    function applyLang(lang) {
+      document.body.className = 'lang-' + lang;
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.getElementById('lang-btn').textContent = lang === 'en' ? '中文' : 'English';
+      const dict = navI18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (dict[key] !== undefined) el.innerHTML = dict[key];
+      });
+    }
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'zh' : 'en';
+      applyLang(currentLang);
+    }
+
+    // Sidebar active link on scroll
+    const sections = document.querySelectorAll('.guide-section');
+    const links = document.querySelectorAll('.sidebar-link');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          links.forEach(l => l.classList.remove('sidebar-link-active'));
+          const active = document.querySelector(`.sidebar-link[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('sidebar-link-active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>
