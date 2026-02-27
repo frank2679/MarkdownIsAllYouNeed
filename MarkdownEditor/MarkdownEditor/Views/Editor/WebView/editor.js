@@ -142,10 +142,15 @@
         // Unordered lists
         html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
 
-        // Ordered lists
-        html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+        // Ordered lists — use data-ol marker to distinguish from unordered
+        html = html.replace(/^\d+\.\s+(.+)$/gm, '<li data-ol>$1</li>');
 
-        // Wrap consecutive <li> in <ul>
+        // Wrap consecutive <li data-ol> in <ol> (ordered lists)
+        html = html.replace(/((?:<li data-ol>.*<\/li>\n?)+)/g, function(match) {
+            return '<ol>' + match.replace(/ data-ol/g, '') + '</ol>';
+        });
+
+        // Wrap remaining consecutive <li> in <ul> (unordered + task lists)
         html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
 
         // Merge adjacent blockquotes
