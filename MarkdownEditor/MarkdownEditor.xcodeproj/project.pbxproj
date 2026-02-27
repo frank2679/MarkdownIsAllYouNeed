@@ -47,6 +47,7 @@
 		AA000038 /* DiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000038 /* DiffView.swift */; };
 		AA000039 /* GitPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000039 /* GitPanelView.swift */; };
 		AA000041 /* PDFPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000041 /* PDFPreviewView.swift */; };
+		AA000042 /* ImageViewerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000042 /* ImageViewerScreen.swift */; };
 		AA000101 /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000101 /* DiffEngineTests.swift */; };
 		AA000102 /* FileTypeDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000102 /* FileTypeDetectorTests.swift */; };
 		AA000103 /* FileManagerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000103 /* FileManagerServiceTests.swift */; };
@@ -95,6 +96,7 @@
 		BB000027 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
 		BB000028 /* EditorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorToolbar.swift; sourceTree = "<group>"; };
 		BB000029 /* MarkdownEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorScreen.swift; sourceTree = "<group>"; };
+		BB000042 /* ImageViewerScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerScreen.swift; sourceTree = "<group>"; };
 		BB000030 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		BB000031 /* editor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = editor.js; sourceTree = "<group>"; };
 		BB000032 /* editor.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = editor.css; sourceTree = "<group>"; };
@@ -274,6 +276,7 @@
 				BB000027 /* MarkdownEditorView.swift */,
 				BB000028 /* EditorToolbar.swift */,
 				BB000029 /* MarkdownEditorScreen.swift */,
+				BB000042 /* ImageViewerScreen.swift */,
 				EE000016 /* WebView */,
 			);
 			path = Editor;
@@ -451,6 +454,7 @@
 				AA000027 /* MarkdownEditorView.swift in Sources */,
 				AA000028 /* EditorToolbar.swift in Sources */,
 				AA000029 /* MarkdownEditorScreen.swift in Sources */,
+				AA000042 /* ImageViewerScreen.swift in Sources */,
 				AA000033 /* GitStatus.swift in Sources */,
 				AA000034 /* GitAPIModels.swift in Sources */,
 				AA000035 /* DiffEngine.swift in Sources */,
