@@ -24,44 +24,50 @@ struct DiffView: View {
     @ViewBuilder
     private var diffContent: some View {
         if wrapLines {
-            ScrollView(.vertical) { lineStack }
+            // Wrap mode: vertical scroll only, lazy for performance, text wraps
+            ScrollView(.vertical) {
+                LazyVStack(alignment: .leading, spacing: 0) { rows }
+            }
         } else {
-            ScrollView([.horizontal, .vertical]) { lineStack }
+            // Scroll mode: use VStack (not lazy) so ScrollView knows the full content
+            // width upfront and horizontal scrolling works correctly
+            ScrollView([.horizontal, .vertical]) {
+                VStack(alignment: .leading, spacing: 0) { rows }
+            }
         }
     }
 
-    private var lineStack: some View {
-        LazyVStack(alignment: .leading, spacing: 0) {
-            // File header
-            HStack {
-                Text(fileName)
-                    .font(.headline)
-                Spacer()
-                HStack(spacing: 8) {
-                    Text("+\(fileDiff.additions)")
-                        .foregroundStyle(.green)
-                    Text("-\(fileDiff.deletions)")
-                        .foregroundStyle(.red)
-                }
-                .font(.subheadline.monospaced())
+    @ViewBuilder
+    private var rows: some View {
+        // File header
+        HStack {
+            Text(fileName)
+                .font(.headline)
+            Spacer()
+            HStack(spacing: 8) {
+                Text("+\(fileDiff.additions)")
+                    .foregroundStyle(.green)
+                Text("-\(fileDiff.deletions)")
+                    .foregroundStyle(.red)
             }
-            .padding()
-            .background(Color(.systemGroupedBackground))
+            .font(.subheadline.monospaced())
+        }
+        .padding()
+        .background(Color(.systemGroupedBackground))
 
-            ForEach(Array(fileDiff.hunks.enumerated()), id: \.offset) { _, hunk in
-                // Hunk header
-                Text(hunk.header)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-                    .padding(.vertical, 4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.blue.opacity(0.08))
+        ForEach(Array(fileDiff.hunks.enumerated()), id: \.offset) { _, hunk in
+            // Hunk header
+            Text(hunk.header)
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.blue.opacity(0.08))
 
-                // Diff lines
-                ForEach(hunk.lines) { line in
-                    DiffLineView(line: line, wrapLines: wrapLines)
-                }
+            // Diff lines
+            ForEach(hunk.lines) { line in
+                DiffLineView(line: line, wrapLines: wrapLines)
             }
         }
     }
@@ -97,10 +103,12 @@ private struct DiffLineView: View {
                 .font(.caption.monospaced())
                 .foregroundStyle(.primary)
                 .lineLimit(wrapLines ? nil : 1)
-                .fixedSize(horizontal: !wrapLines, vertical: false)
 
-            Spacer(minLength: 0)
+            if wrapLines { Spacer(minLength: 0) }
         }
+        // In scroll mode, fixedSize lets the HStack grow to its natural (content) width
+        // so the parent VStack—and thus the ScrollView—know the full content width.
+        .fixedSize(horizontal: !wrapLines, vertical: false)
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
         .background(backgroundColor)

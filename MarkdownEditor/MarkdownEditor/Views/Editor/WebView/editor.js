@@ -150,8 +150,21 @@
             return '<ol>' + match.replace(/ data-ol/g, '') + '</ol>';
         });
 
+        // Protect <ol> blocks so the <ul> wrap step below doesn't also match their <li> items.
+        // (The <ul> regex has no ^ anchor, so it can match <li> inside an already-created <ol>.)
+        const olPlaceholders = [];
+        html = html.replace(/<ol>[\s\S]*?<\/ol>/g, function(match) {
+            olPlaceholders.push(match);
+            return '<!--OL' + (olPlaceholders.length - 1) + '-->';
+        });
+
         // Wrap remaining consecutive <li> in <ul> (unordered + task lists)
         html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+        // Restore <ol> blocks
+        html = html.replace(/<!--OL(\d+)-->/g, function(_, index) {
+            return olPlaceholders[parseInt(index)];
+        });
 
         // Merge adjacent blockquotes
         html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
