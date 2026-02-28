@@ -20,9 +20,6 @@ jobs:
           mkdir -p Config
           printf 'GITHUB_CLIENT_ID = CI_PLACEHOLDER\nGITHUB_CLIENT_SECRET = CI_PLACEHOLDER\n' > Config/Debug.xcconfig
 
-      - name: Install iOS Simulator Runtime
-        run: xcodebuild -downloadPlatform iOS
-
       - name: Run Tests
         run: |
           xcodebuild test \

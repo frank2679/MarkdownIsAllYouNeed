@@ -2,6 +2,46 @@ import SwiftUI
 import UIKit
 import WebKit
 
+// MARK: - LocalFileSchemeHandler
+// Serves local files under the app sandbox via the "localfile://" custom scheme,
+// bypassing WKWebView's file:// access restrictions for inline-loaded HTML pages.
+
+class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url else {
+            urlSchemeTask.didFailWithError(URLError(.badURL))
+            return
+        }
+        let filePath = url.path
+        let fileURL = URL(fileURLWithPath: filePath)
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let mimeType = Self.mimeType(for: url.pathExtension)
+            let response = URLResponse(url: url, mimeType: mimeType,
+                                       expectedContentLength: data.count,
+                                       textEncodingName: nil)
+            urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+        } catch {
+            urlSchemeTask.didFailWithError(error)
+        }
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private static func mimeType(for ext: String) -> String {
+        switch ext.lowercased() {
+        case "png":  return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "gif":  return "image/gif"
+        case "webp": return "image/webp"
+        case "svg":  return "image/svg+xml"
+        default:     return "application/octet-stream"
+        }
+    }
+}
+
 // MARK: - KeyboardAccessoryWebView
 
 class KeyboardAccessoryWebView: WKWebView {
@@ -19,6 +59,7 @@ struct MarkdownEditorView: UIViewRepresentable {
     var onCoordinatorReady: ((Coordinator) -> Void)?
     var onModeChangeRequested: ((String) -> Void)?
     var onInternalLinkClicked: ((String) -> Void)?
+    var onImageClicked: ((URL) -> Void)?
     var fontSize: Int = 16
 
     func makeCoordinator() -> Coordinator {
@@ -31,8 +72,8 @@ struct MarkdownEditorView: UIViewRepresentable {
         userContentController.add(context.coordinator, name: "bridge")
         config.userContentController = userContentController
 
-        // Allow file access for local images
-        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        // Register custom scheme handler so inline-loaded pages can serve local repo images
+        config.setURLSchemeHandler(LocalFileSchemeHandler(), forURLScheme: "localfile")
 
         let webView = KeyboardAccessoryWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
@@ -57,15 +98,11 @@ struct MarkdownEditorView: UIViewRepresentable {
         context.coordinator.toolbarHostingController = toolbarHost
         webView.accessoryView = toolbarHost.view
 
-        // Load editor HTML from bundle
-        // Files are added as a group (not folder reference), so they're in the bundle root
-        if let htmlURL = Bundle.main.url(forResource: "index", withExtension: "html") {
-            webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
-        } else {
-            // Fallback: inline HTML
-            let html = Self.inlineEditorHTML()
-            webView.loadHTMLString(html, baseURL: fileURL.deletingLastPathComponent())
-        }
+        // Load editor HTML inline with baseURL pointing to the file's directory.
+        // This allows relative image paths (e.g. ./image.png) to resolve correctly
+        // from the repo directory, without needing separate allowingReadAccessTo config.
+        let html = Self.inlineEditorHTML()
+        webView.loadHTMLString(html, baseURL: fileURL.deletingLastPathComponent())
 
         context.coordinator.webView = webView
         DispatchQueue.main.async {
@@ -78,7 +115,7 @@ struct MarkdownEditorView: UIViewRepresentable {
         // No dynamic updates needed — content is set via bridge after page loads
     }
 
-    // Inline fallback HTML when bundle resources aren't found
+    // Inline HTML with CSS and JS from bundle resources
     static func inlineEditorHTML() -> String {
         return """
         <!DOCTYPE html>
@@ -87,37 +124,7 @@ struct MarkdownEditorView: UIViewRepresentable {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { color-scheme: light dark; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 16px; line-height: 1.6; padding: 16px;
-            color: #1a1a1a; background: #fff;
-        }
-        @media (prefers-color-scheme: dark) {
-            body { color: #e0e0e0; background: #1c1c1e; }
-        }
-        #editor { min-height: 100vh; outline: none; word-wrap: break-word; }
-        #editor:empty::before { content: "Start writing..."; color: #999; font-style: italic; }
-        #editor h1 { font-size: 28px; font-weight: 700; margin: 24px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
-        #editor h2 { font-size: 22px; font-weight: 600; margin: 20px 0 10px; }
-        #editor h3 { font-size: 18px; font-weight: 600; margin: 16px 0 8px; }
-        #editor p { margin: 8px 0; }
-        #editor strong { font-weight: 600; }
-        #editor code { font-family: "SF Mono", Menlo, monospace; font-size: 14px; background: #f5f5f5; padding: 2px 6px; border-radius: 4px; }
-        @media (prefers-color-scheme: dark) { #editor code { background: #2c2c2e; } }
-        #editor pre { background: #f5f5f5; padding: 12px 16px; border-radius: 8px; margin: 12px 0; overflow-x: auto; }
-        @media (prefers-color-scheme: dark) { #editor pre { background: #2c2c2e; } }
-        #editor pre code { background: none; padding: 0; }
-        #editor blockquote { border-left: 3px solid #d0d0d0; padding-left: 16px; margin: 12px 0; color: #666; }
-        #editor ul, #editor ol { padding-left: 24px; margin: 8px 0; }
-        #editor li { margin: 4px 0; }
-        #editor hr { border: none; border-top: 1px solid #e0e0e0; margin: 16px 0; }
-        #editor a { color: #0066cc; text-decoration: underline; }
-        #editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
-        #editor table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
-        #editor th, #editor td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }
-        #editor th { background: #f5f5f5; font-weight: 600; }
+        \(editorCSSSource())
         </style>
         </head>
         <body>
@@ -127,6 +134,24 @@ struct MarkdownEditorView: UIViewRepresentable {
         </script>
         </body>
         </html>
+        """
+    }
+
+    private static func editorCSSSource() -> String {
+        if let cssURL = Bundle.main.url(forResource: "editor", withExtension: "css"),
+           let css = try? String(contentsOf: cssURL) {
+            return css
+        }
+        // Minimal fallback
+        return """
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; font-size: 16px; line-height: 1.6; padding: 16px; }
+        #editor { min-height: 100vh; outline: none; word-wrap: break-word; }
+        #editor h1 { font-size: 1.75em; font-weight: 700; }
+        #editor h2 { font-size: 1.375em; font-weight: 600; }
+        #editor h3 { font-size: 1.125em; font-weight: 600; }
+        #editor img { max-width: 100%; height: auto; }
+        #editor a { color: #0066cc; text-decoration: underline; }
         """
     }
 
@@ -215,6 +240,13 @@ struct MarkdownEditorView: UIViewRepresentable {
                     }
                 }
 
+            case "imageClicked":
+                if let urlString = payload["url"] as? String, let url = URL(string: urlString) {
+                    DispatchQueue.main.async {
+                        self.parent.onImageClicked?(url)
+                    }
+                }
+
             case "modeChangeRequested":
                 if let mode = payload["mode"] as? String {
                     DispatchQueue.main.async {
@@ -236,15 +268,18 @@ struct MarkdownEditorView: UIViewRepresentable {
             contentLoaded = true
 
             let markdown = FileManagerService.shared.readFileContent(at: parent.fileURL) ?? ""
+            let basePath = parent.fileURL.deletingLastPathComponent().path
 
-            // Use JSONEncoder for safe string escaping (handles quotes, newlines, backslashes, etc.)
-            let jsonString = (try? JSONEncoder().encode(markdown)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
+            // Use JSONSerialization so both markdown and basePath are safely escaped
+            let payload: [String: Any] = ["markdown": markdown, "basePath": basePath]
+            guard let payloadData = try? JSONSerialization.data(withJSONObject: payload),
+                  let payloadJSON = String(data: payloadData, encoding: .utf8) else { return }
 
             let initialFontSize = parent.fontSize
 
             // Set content, switch to preview, and apply initial font size
             let js = """
-                window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });
+                window.bridge.receive({ action: 'setContent', version: 1, payload: \(payloadJSON) });
                 window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: 'preview' } });
                 window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(initialFontSize) } });
                 """
@@ -315,10 +350,12 @@ struct MarkdownEditorView: UIViewRepresentable {
                     let markdown = fallbackMarkdown.isEmpty
                         ? (FileManagerService.shared.readFileContent(at: self.parent.fileURL) ?? "")
                         : fallbackMarkdown
-                    let jsonString = (try? JSONEncoder().encode(markdown))
-                        .flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
+                    let basePath = self.parent.fileURL.deletingLastPathComponent().path
+                    let payload: [String: Any] = ["markdown": markdown, "basePath": basePath]
+                    guard let payloadData = try? JSONSerialization.data(withJSONObject: payload),
+                          let payloadJSON = String(data: payloadData, encoding: .utf8) else { return }
                     let js = """
-                        window.bridge.receive({ action: 'setContent', version: 1, payload: { markdown: \(jsonString) } });
+                        window.bridge.receive({ action: 'setContent', version: 1, payload: \(payloadJSON) });
                         window.bridge.receive({ action: 'setMode', version: 1, payload: { mode: 'preview' } });
                         window.bridge.receive({ action: 'setFontSize', version: 1, payload: { size: \(fontSize) } });
                         """

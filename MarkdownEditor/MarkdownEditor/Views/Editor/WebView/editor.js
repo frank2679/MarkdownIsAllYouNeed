@@ -20,6 +20,7 @@
     let isDirty = false;
     let currentMarkdown = '';
     let currentMode = 'edit'; // 'preview' | 'edit'
+    let currentBasePath = null; // file:// directory URL for resolving relative image paths
 
     // =========================================================================
     // Bridge: unified communication protocol
@@ -35,7 +36,7 @@
 
             switch (action) {
                 case 'setContent':
-                    setContent(payload.markdown || '');
+                    setContent(payload.markdown || '', payload.basePath || null);
                     break;
                 case 'getContent':
                     sendToNative('contentReady', { markdown: getMarkdown() });
@@ -105,11 +106,26 @@
         // Blockquotes
         html = html.replace(/^>\s+(.+)$/gm, '<blockquote><p>$1</p></blockquote>');
 
-        // Images
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+        // Images — resolve relative paths via localfile:// custom scheme for sandbox access
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, src) {
+            if (currentBasePath
+                && !src.startsWith('http')
+                && !src.startsWith('data:')
+                && !src.startsWith('localfile://')) {
+                // currentBasePath is a filesystem path (e.g. /var/mobile/.../Documents/repos/myrepo)
+                var fullPath = src.startsWith('/') ? src : currentBasePath + '/' + src;
+                src = 'localfile://' + fullPath;
+            }
+            return '<img src="' + src + '" alt="' + alt + '">';
+        });
 
         // Links
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+        // Auto-link bare URLs (not already inside an HTML attribute like href="..." or src="...")
+        html = html.replace(/(?<![="'(])https?:\/\/[^\s<>"')\]]+/g, function(url) {
+            return '<a href="' + url + '">' + url + '</a>';
+        });
 
         // Bold + Italic
         html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -126,11 +142,29 @@
         // Unordered lists
         html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
 
-        // Ordered lists
-        html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+        // Ordered lists — use data-ol marker to distinguish from unordered
+        html = html.replace(/^\d+\.\s+(.+)$/gm, '<li data-ol>$1</li>');
 
-        // Wrap consecutive <li> in <ul>
+        // Wrap consecutive <li data-ol> in <ol> (ordered lists)
+        html = html.replace(/((?:<li data-ol>.*<\/li>\n?)+)/g, function(match) {
+            return '<ol>' + match.replace(/ data-ol/g, '') + '</ol>';
+        });
+
+        // Protect <ol> blocks so the <ul> wrap step below doesn't also match their <li> items.
+        // (The <ul> regex has no ^ anchor, so it can match <li> inside an already-created <ol>.)
+        const olPlaceholders = [];
+        html = html.replace(/<ol>[\s\S]*?<\/ol>/g, function(match) {
+            olPlaceholders.push(match);
+            return '<!--OL' + (olPlaceholders.length - 1) + '-->';
+        });
+
+        // Wrap remaining consecutive <li> in <ul> (unordered + task lists)
         html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+        // Restore <ol> blocks
+        html = html.replace(/<!--OL(\d+)-->/g, function(_, index) {
+            return olPlaceholders[parseInt(index)];
+        });
 
         // Merge adjacent blockquotes
         html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
@@ -305,11 +339,21 @@
                     break;
                 case 'a':
                     const href = child.getAttribute('href') || '';
-                    result += '[' + inner + '](' + href + ')';
+                    // Auto-linked URL (text === href) → restore as bare URL
+                    result += (inner.trim() === href.trim()) ? href : '[' + inner + '](' + href + ')';
                     break;
                 case 'img':
-                    const src = child.getAttribute('src') || '';
+                    let src = child.getAttribute('src') || '';
                     const alt = child.getAttribute('alt') || '';
+                    // Convert localfile:// back to relative path for markdown storage
+                    if (src.startsWith('localfile://') && currentBasePath) {
+                        const prefix = 'localfile://' + currentBasePath + '/';
+                        if (src.startsWith(prefix)) {
+                            src = src.slice(prefix.length);
+                        } else {
+                            src = src.slice('localfile://'.length);
+                        }
+                    }
                     result += '![' + alt + '](' + src + ')';
                     break;
                 case 'hr': result += '\n---\n\n'; break;
@@ -375,8 +419,9 @@
     // Content management
     // =========================================================================
 
-    function setContent(markdown) {
+    function setContent(markdown, basePath) {
         currentMarkdown = markdown;
+        if (basePath) currentBasePath = basePath;
         editor.innerHTML = markdownToHTML(markdown);
         isDirty = false;
     }
@@ -616,9 +661,18 @@
     });
 
     // In preview mode, tap anywhere to request edit mode.
-    // Exception: link taps open the URL without entering edit mode.
+    // Exceptions: image taps open full-screen viewer; link taps open the URL.
     editor.addEventListener('click', function(e) {
         if (currentMode === 'preview') {
+            // Image tap → full-screen viewer
+            const img = e.target.closest('img');
+            if (img) {
+                e.preventDefault();
+                e.stopPropagation();
+                const src = img.getAttribute('src') || '';
+                if (src) sendToNative('imageClicked', { url: src });
+                return;
+            }
             const anchor = e.target.closest('a[href]');
             if (anchor) {
                 e.preventDefault();

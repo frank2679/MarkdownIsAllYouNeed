@@ -60,6 +60,9 @@ struct MarkdownEditorScreen: View {
     @State private var gistError: String? = nil
     @State private var showGistError = false
 
+    // Image viewer
+    @State private var imageViewerURL: URL?
+
     // Font Size — global preference, persisted via AppStorage
     @AppStorage("markdownFontSize") private var fontSizeRaw: Int = MarkdownFontSize.m.rawValue
 
@@ -121,6 +124,9 @@ struct MarkdownEditorScreen: View {
                     if FileManager.default.fileExists(atPath: resolved.path) {
                         linkedFile = LinkedFile(url: resolved)
                     }
+                },
+                onImageClicked: { url in
+                    imageViewerURL = url
                 },
                 fontSize: fontSizeRaw
             )
@@ -260,6 +266,9 @@ struct MarkdownEditorScreen: View {
             ) { destination in
                 performMove(to: destination)
             }
+        }
+        .fullScreenCover(item: $imageViewerURL) { url in
+            ImageViewerScreen(imageURL: url)
         }
     }
 

@@ -612,9 +612,11 @@ final class GitService {
             let repoName = String(parts[1])
 
             let provider = GitHubProvider(token: token)
+            // Fall back to default branch if headCommitSHA is empty (e.g. repos migrated from old format)
+            let ref = snapshot.headCommitSHA.isEmpty ? repo.defaultBranch : snapshot.headCommitSHA
             let originalData = try await provider.getFileContent(
                 owner: owner, repo: repoName,
-                path: change.path, ref: snapshot.headCommitSHA
+                path: change.path, ref: ref
             )
 
             // Restore the file

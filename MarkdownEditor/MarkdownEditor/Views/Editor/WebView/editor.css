@@ -51,9 +51,9 @@ body {
     font-style: italic;
 }
 
-/* Headings */
+/* Headings — em units so they scale with body font-size setting */
 #editor h1 {
-    font-size: 28px;
+    font-size: 1.75em;
     font-weight: 700;
     color: var(--heading-color);
     margin: 24px 0 12px 0;
@@ -63,7 +63,7 @@ body {
 }
 
 #editor h2 {
-    font-size: 22px;
+    font-size: 1.375em;
     font-weight: 600;
     color: var(--heading-color);
     margin: 20px 0 10px 0;
@@ -71,14 +71,14 @@ body {
 }
 
 #editor h3 {
-    font-size: 18px;
+    font-size: 1.125em;
     font-weight: 600;
     color: var(--heading-color);
     margin: 16px 0 8px 0;
 }
 
 #editor h4, #editor h5, #editor h6 {
-    font-size: 16px;
+    font-size: 1.0em;
     font-weight: 600;
     color: var(--heading-color);
     margin: 12px 0 6px 0;
